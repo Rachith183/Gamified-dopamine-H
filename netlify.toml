@@ -1,8 +1,16 @@
 [build]
   publish = "frontend"
   command = ""
+  functions = "netlify/functions"
 
 [[redirects]]
-  from = "/api/*"
-  to = "https://gamified-dopamine-h.vercel.app/api/:splat"
+  from = "/api/emotion"
+  to = "/.netlify/functions/emotion"
   status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/stream"
+  to = "/.netlify/functions/stream"
+  status = 200
+  force = true

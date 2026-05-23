@@ -16,8 +16,8 @@ const firebaseConfig = {
 // GEMINI API CONFIGURATION — PRIMARY / SECONDARY FALLBACK
 // ============================================================================
 
-const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-window.AOI_API_BASE_URL = isLocalhost ? "http://localhost:3000" : "https://us-central1-intai-a71d8.cloudfunctions.net/api";
+// API Base URL: use current origin (works on Netlify, localhost, GitHub Pages)
+window.AOI_API_BASE_URL = window.location.origin;
 
 // API keys are server-side only (not exposed in frontend)
 window.AOI_GEMINI_MODEL = "gemini-2.5-flash";

@@ -135,48 +135,80 @@ let synthesisEngineTimelineLoop = null;
 function getHinamiVoiceProfile() {
     const voices = window.speechSynthesis.getVoices();
     
-    // Priority 1: Premium Natural Female Voices
+    // Helper to check if a voice is female
+    const isFemaleVoice = (v) => {
+        const name = v.name.toLowerCase();
+        return name.includes('aria') || name.includes('jenny') || name.includes('sara') || 
+               name.includes('zira') || name.includes('hazel') || name.includes('samantha') || 
+               name.includes('victoria') || name.includes('female') || name.includes('woman') || 
+               name.includes('hazel') || name.includes('sonia') || name.includes('libby');
+    };
+
+    // 1. US English (en-US) + Natural + Female
     let target = voices.find(v => {
+        const lang = v.lang.toLowerCase();
         const name = v.name.toLowerCase();
-        const isNatural = name.includes('natural');
-        const isFemale = name.includes('aria') || name.includes('jenny') || name.includes('sara') || name.includes('zira') || name.includes('hazel') || name.includes('samantha') || name.includes('victoria') || name.includes('female') || name.includes('zira');
-        return isNatural && isFemale;
+        return (lang.startsWith('en-us') || lang === 'en_us') && name.includes('natural') && isFemaleVoice(v);
     });
     if (target) {
-        console.log('✅ Hinami voice (Priority 1 - Natural Female):', target.name);
+        console.log('✅ Hinami voice (Priority 1 - US Natural Female):', target.name);
         return target;
     }
-    
-    // Priority 2: Standard clear female voices
-    target = voices.find(v => 
-        v.name.includes('Aria') || 
-        v.name.includes('Google US English') ||
-        v.name.includes('Samantha') || 
-        v.name.includes('Hazel') ||
-        v.name.includes('Zira') ||
-        v.name.includes('Victoria') ||
-        v.name.includes('Jenny')
-    );
-    if (target) {
-        console.log('✅ Hinami voice (Priority 2 - Standard Female):', target.name);
-        return target;
-    }
-    
-    // Priority 3: Region/Gender Profile Scan
+
+    // 2. UK English (en-GB) + Natural + Female
     target = voices.find(v => {
+        const lang = v.lang.toLowerCase();
         const name = v.name.toLowerCase();
-        const isEnglish = v.lang.startsWith('en-US') || v.lang.startsWith('en-GB');
-        const isFemale = name.includes('female') || name.includes('woman') || !name.includes('male');
-        return isEnglish && isFemale;
+        return (lang.startsWith('en-gb') || lang === 'en_gb') && name.includes('natural') && isFemaleVoice(v);
     });
     if (target) {
-        console.log('✅ Hinami voice (Priority 3 - Region Scan):', target.name);
+        console.log('✅ Hinami voice (Priority 2 - UK Natural Female):', target.name);
         return target;
     }
-    
-    // Fallback: First available voice
+
+    // 3. US English (en-US) + Female
+    target = voices.find(v => {
+        const lang = v.lang.toLowerCase();
+        return (lang.startsWith('en-us') || lang === 'en_us') && isFemaleVoice(v);
+    });
+    if (target) {
+        console.log('✅ Hinami voice (Priority 3 - US Female):', target.name);
+        return target;
+    }
+
+    // 4. UK English (en-GB) + Female
+    target = voices.find(v => {
+        const lang = v.lang.toLowerCase();
+        return (lang.startsWith('en-gb') || lang === 'en_gb') && isFemaleVoice(v);
+    });
+    if (target) {
+        console.log('✅ Hinami voice (Priority 4 - UK Female):', target.name);
+        return target;
+    }
+
+    // 5. General English + Female
+    target = voices.find(v => {
+        const lang = v.lang.toLowerCase();
+        return lang.startsWith('en') && isFemaleVoice(v);
+    });
+    if (target) {
+        console.log('✅ Hinami voice (Priority 5 - English Female):', target.name);
+        return target;
+    }
+
+    // Fallback: First available en-US or en-GB voice
+    target = voices.find(v => {
+        const lang = v.lang.toLowerCase();
+        return lang.startsWith('en-us') || lang.startsWith('en-gb');
+    });
+    if (target) {
+        console.log('✅ Hinami voice (Priority 6 - English Fallback):', target.name);
+        return target;
+    }
+
+    // Ultimate fallback: First available voice
     if (voices.length > 0) {
-        console.log('ℹ️ Hinami voice (Fallback):', voices[0].name);
+        console.log('ℹ️ Hinami voice (Priority 7 - Ultimate Fallback):', voices[0].name);
         return voices[0];
     }
     
@@ -1233,9 +1265,9 @@ async function generateAndPlayAudio(text) {
             utterance.voice = characterVoiceProfile;
         }
         
-        // Soft, calm, medium-slow, collected, feminine-human voice cadence
-        utterance.rate = 0.88;      // Medium to slightly slow paced
-        utterance.pitch = 1.05;     // Soft, warm, natural feminine pitch
+        // Soft, calm, medium to slightly slow, collected feminine-human voice cadence
+        utterance.rate = 0.92;      // Medium to slightly slow paced (slightly faster than 0.88)
+        utterance.pitch = 0.93;     // Slightly low pitch for warm composure
         utterance.volume = 1.0;
         
         // Calculate duration based on slower speech rate

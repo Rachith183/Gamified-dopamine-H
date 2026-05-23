@@ -10,24 +10,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Create .env.local with secrets
+      - name: Set environment variables in Vercel
         run: |
-          cat > .env.local << EOF
-          GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
-          GROQ_API_KEY_SECONDARY=${{ secrets.GROQ_API_KEY_SECONDARY }}
-          GROQ_API_KEY_TERTIARY=${{ secrets.GROQ_API_KEY_TERTIARY }}
-          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-          GEMINI_API_KEY_SECONDARY=${{ secrets.GEMINI_API_KEY_SECONDARY }}
-          NODE_ENV=production
-          PORT=3000
-          EOF
-      
-      - name: Install Vercel CLI
-        run: npm install -g vercel
-      
-      - name: Deploy to Vercel
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-        run: vercel deploy --prod --token $VERCEL_TOKEN
+          echo "API keys are configured as GitHub Secrets"
+          echo "Vercel will auto-deploy on push to main"
+          echo "GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}"
+          echo "GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}"

@@ -9,46 +9,44 @@
 <body>
     <!-- TOP HEADER BAR -->
     <header id="top-header-bar">
-        <button id="sidebar-toggle-btn" class="menu-button">☰</button>
+        <button id="sidebar-toggle-btn" class="menu-button">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <h1 class="app-title">Interactive Character Build AI</h1>
     </header>
 
-    <!-- COLLAPSIBLE LEFT SIDEBAR -->
-    <aside id="app-sidebar">
-        <nav class="sidebar-nav">
-            <button class="sidebar-nav-item" data-panel="ch-core">
-                <span class="nav-icon">⚙️</span>
-                <span class="nav-label">CH Core</span>
-            </button>
-            <button class="sidebar-nav-item" data-panel="goal-tracker">
-                <span class="nav-icon">📊</span>
-                <span class="nav-label">Goal Tracker</span>
-            </button>
-            <button class="sidebar-nav-item" data-panel="calendar">
-                <span class="nav-icon">📅</span>
-                <span class="nav-label">Calendar</span>
-            </button>
-            <button class="sidebar-nav-item" data-panel="distraction">
-                <span class="nav-icon">⏰</span>
-                <span class="nav-label">Distraction Tracker</span>
-            </button>
-            <button class="sidebar-nav-item" data-panel="profile">
-                <span class="nav-icon">👤</span>
-                <span class="nav-label">User Profile Context</span>
-            </button>
-            <button class="sidebar-nav-item" data-panel="live-plan">
-                <span class="nav-icon">⚔️</span>
-                <span class="nav-label">Battle Plan</span>
-            </button>
-            <button class="sidebar-nav-item" data-panel="rewards">
-                <span class="nav-icon">🏆</span>
-                <span class="nav-label">Reward Shop</span>
-            </button>
-        </nav>
-    </aside>
+    <div id="app-main-layout">
+        <!-- COLLAPSIBLE LEFT SIDEBAR -->
+        <aside id="app-sidebar">
+            <nav class="sidebar-nav">
+                <button class="sidebar-nav-item" data-panel="ch-core">
+                    <span class="nav-label">CH Core</span>
+                </button>
+                <button class="sidebar-nav-item" data-panel="goal-tracker">
+                    <span class="nav-label">Goal Tracker</span>
+                </button>
+                <button class="sidebar-nav-item" data-panel="calendar">
+                    <span class="nav-label">Calendar</span>
+                </button>
+                <button class="sidebar-nav-item" data-panel="distraction">
+                    <span class="nav-label">Distraction Tracker</span>
+                </button>
+                <button class="sidebar-nav-item" data-panel="profile">
+                    <span class="nav-label">User Profile Context</span>
+                </button>
+                <button class="sidebar-nav-item" data-panel="live-plan">
+                    <span class="nav-label">Battle Plan</span>
+                </button>
+                <button class="sidebar-nav-item" data-panel="rewards">
+                    <span class="nav-label">Reward Shop</span>
+                </button>
+            </nav>
+        </aside>
 
-    <!-- MAIN CONTENT VIEWPORT -->
-    <main id="content-viewport">
+        <!-- MAIN CONTENT VIEWPORT -->
+        <main id="content-viewport">
         
         <!-- PANEL 1: CH CORE VIEW -->
         <section id="panel-ch-core" class="app-panel">
@@ -56,7 +54,7 @@
                 <!-- CHARACTER AVATAR STAGE -->
                 <div id="character-display" class="character-display">
                     <div id="avatar-canvas" class="avatar-canvas character-container">
-                        <img id="avatar-base" src="./layers/base layers/base.png" alt="Character Avatar" class="avatar-layer character-sprite">
+                        <img id="avatar-base" src="./layers/base layers/base.png" alt="Character Avatar" class="avatar-layer character-sprite character-retro-look">
                     </div>
                 </div>
                 
@@ -296,6 +294,7 @@
         </section>
 
     </main>
+    </div>
 
     <!-- SCRIPTS -->
     <!-- Firebase SDK (compat mode for CDN use) -->

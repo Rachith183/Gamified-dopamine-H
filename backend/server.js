@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import admin from "firebase-admin";
 import { GoogleGenAI } from "@google/genai";
+import { initializeDatabase, saveMessage, saveUserData, getUserData } from "./database.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1757,6 +1758,13 @@ Keep dialogue under 20 words. Act as Aoi Hinami - cold, calculated, direct.`;
       userId: userIdSafe
     };
 
+    // Save message to database
+    try {
+      await saveMessage(userIdSafe, message, dialogue, getActiveModel());
+    } catch (dbError) {
+      console.warn('⚠️ Failed to save message to database:', dbError.message);
+    }
+
     response.json(normalizedResponse);
   } catch (error) {
     console.error('❌ Emotion API Error:', error.message);
@@ -1952,10 +1960,20 @@ const isFirebaseRuntime = Boolean(process.env.FUNCTION_TARGET || process.env.K_S
 const isVercelRuntime = Boolean(process.env.VERCEL || process.env.VERCEL_ENV);
 
 if (!isFirebaseRuntime && !isVercelRuntime) {
-  app.listen(port, () => {
-    console.log(`Interactive Character Build AI is running at http://localhost:${port}`);
-    console.log(`🤖 Starting with model: ${getActiveModel()}`);
-    scheduleUpgradeAttempt(); // Start checking for model upgrades
+  initializeDatabase().then(() => {
+    app.listen(port, () => {
+      console.log(`Interactive Character Build AI is running at http://localhost:${port}`);
+      console.log(`🤖 Starting with model: ${getActiveModel()}`);
+      scheduleUpgradeAttempt(); // Start checking for model upgrades
+    });
+  }).catch(err => {
+    console.error("Failed to initialize database:", err);
+    process.exit(1);
+  });
+} else {
+  // For Vercel/serverless, initialize database on first request
+  initializeDatabase().catch(err => {
+    console.error("Failed to initialize database:", err);
   });
 }
 

@@ -1,7 +1,6 @@
 import cors from "cors";
 import "dotenv/config";
 import express from "express";
-import { onRequest } from "firebase-functions/v2/https";
 import multer from "multer";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -1957,12 +1956,7 @@ if (!isFirebaseRuntime && !isVercelRuntime) {
   });
 }
 
-export const api = onRequest({
-  region: "us-central1",
-  cors: true,
-  timeoutSeconds: 120,
-  memory: "512MiB"
-}, app);
+export default app;
 
 // Export for Vercel
 export default app;

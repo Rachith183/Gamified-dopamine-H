@@ -54,22 +54,30 @@ const callGroq = async (prompt) => {
   throw new Error("All Groq keys exhausted");
 };
 
-// Keyword-based emotion detection for safety
+// Keyword-based emotion detection
 const detectEmotionByKeywords = (message) => {
   const msgLower = message.toLowerCase();
 
+  // exp_angry: depressed, down, sad, anxious, overwhelmed, hopeless
   if (/depressed|down|sad|worthless|hopeless|crying|suicidal|anxious|overwhelmed|stressed/i.test(msgLower)) {
-    return "exp_angry";
+    return { expression_id: "exp_angry", dialogue: "Your instability is showing." };
   }
+
+  // exp_smiling: happy, excited, enthusiastic, optimistic, great
   if (/excited|happy|enthusiastic|stoked|great|amazing|awesome|love it|incredible|fantastic|best/i.test(msgLower)) {
-    return "exp_smiling";
+    return { expression_id: "exp_smiling", dialogue: "You're trending upward." };
   }
+
+  // exp_satisfied: completed, finished, done, accomplished, exercised, studied
   if (/completed|finished|done|accomplished|achieved|passed|succeeded|nailed|workout|exercise|studied|learned/i.test(msgLower)) {
-    return "exp_satisfied";
+    return { expression_id: "exp_satisfied", dialogue: "Progress logged." };
   }
+
+  // exp_annoyed: procrastinating, lazy, wasting time, junk, excuse, failed
   if (/procrastinat|wasting time|lazy|junk|eating|skipped|failed|gave up|excuse|quit|wasted|distracted|overthinking/i.test(msgLower)) {
-    return "exp_annoyed";
+    return { expression_id: "exp_annoyed", dialogue: "Predictable inefficiency." };
   }
+
   return null;
 };
 
@@ -89,47 +97,43 @@ export const handler = async (event) => {
     const distractionsCount = userContext?.distractionsCount || 0;
     const stability = userContext?.stability || 0.5;
 
-    // Try keyword detection first (instant)
+    // Try keyword detection first (instant, no API call)
     const keywordMatch = detectEmotionByKeywords(message);
     if (keywordMatch) {
       return {
         statusCode: 200,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          expression_id: keywordMatch,
-          dialogue: "Pattern recognized."
-        })
+        body: JSON.stringify(keywordMatch)
       };
     }
 
-    // If no keyword match, call Groq/Gemini
-    const emotionPrompt = `Respond with ONLY valid JSON in this exact format:
-{"expression_id":"exp_angry","dialogue":"message here"}
+    const emotionPrompt = `Respond with ONLY valid JSON:
+{"expression_id":"exp_angry","dialogue":"response"}
 
-User said: "${message}"
-Daily Progress: ${dailyProgress}%
-Distractions: ${distractionsCount}
-Stability: ${(stability * 100).toFixed(0)}%
+User: "${message}"
+Progress: ${dailyProgress}%, Distractions: ${distractionsCount}, Stability: ${(stability * 100).toFixed(0)}%
 
-Choose ONE emotion:
-- exp_angry: User is depressed/anxious/overwhelmed
-- exp_smiling: User is happy/excited/optimistic
-- exp_satisfied: User completed task/accomplished goal
-- exp_annoyed: User is procrastinating/wasting time
-
-Keep dialogue under 20 words. Act as Aoi Hinami - cold, direct.`;
+Pick ONE: exp_angry | exp_smiling | exp_satisfied | exp_annoyed
+Keep dialogue under 15 words. Be Aoi Hinami - cold, direct.`;
 
     let emotionText = "";
+    let usedGemini = false;
+
+    // Try Groq first
     try {
       emotionText = await callGroq(emotionPrompt);
     } catch (groqErr) {
-      console.log("Groq failed, trying Gemini:", groqErr.message);
+      console.log("Groq failed:", groqErr.message);
+      // Fall back to Gemini
       try {
         emotionText = await callGemini(emotionPrompt);
+        usedGemini = true;
       } catch (geminiErr) {
+        console.error("Gemini also failed:", geminiErr.message);
         return {
-          statusCode: 503,
-          body: JSON.stringify({ error: "APIs busy, using default emotion" })
+          statusCode: 200,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ expression_id: "exp_annoyed", dialogue: "APIs temporarily unavailable." })
         };
       }
     }
@@ -138,7 +142,9 @@ Keep dialogue under 20 words. Act as Aoi Hinami - cold, direct.`;
     try {
       emotionData = JSON.parse(emotionText);
     } catch (parseErr) {
-      console.warn("JSON parse failed:", parseErr.message, "Raw:", emotionText);
+      console.warn("Parse error:", parseErr.message, "Raw response:", emotionText);
+      // Return what we got even if malformed
+      emotionData = { expression_id: "exp_annoyed", dialogue: "Response received." };
     }
 
     return {
@@ -149,8 +155,9 @@ Keep dialogue under 20 words. Act as Aoi Hinami - cold, direct.`;
   } catch (error) {
     console.error("Emotion endpoint error:", error);
     return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message })
+      statusCode: 200,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ expression_id: "exp_annoyed", dialogue: "Error processing emotion." })
     };
   }
 };

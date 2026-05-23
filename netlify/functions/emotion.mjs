@@ -54,6 +54,33 @@ const callGroq = async (prompt) => {
   throw new Error("All Groq keys exhausted");
 };
 
+// Keyword-based emotion detection for safety fallback
+const detectEmotionByKeywords = (message) => {
+  const msgLower = message.toLowerCase();
+
+  // Angry: depressed, down, sad, worthless, hopeless, crying, suicidal, anxious
+  if (/depressed|down|sad|worthless|hopeless|crying|suicidal|anxious|overwhelmed|stressed/i.test(msgLower)) {
+    return { expression_id: "exp_angry", confidence: 0.9 };
+  }
+
+  // Smiling: excited, happy, enthusiastic, stoked, great, amazing, awesome, love it
+  if (/excited|happy|enthusiastic|stoked|great|amazing|awesome|love it|incredible|fantastic|best/i.test(msgLower)) {
+    return { expression_id: "exp_smiling", confidence: 0.85 };
+  }
+
+  // Proud/Satisfied: completed, finished, done, accomplished, achieved, passed, succeeded, nailed it
+  if (/completed|finished|done|accomplished|achieved|passed|succeeded|nailed|workout|exercise|studied|learned/i.test(msgLower)) {
+    return { expression_id: "exp_satisfied", confidence: 0.8 };
+  }
+
+  // Annoyed/Dissatisfied: procrastinating, wasting time, lazy, junk food, eating, skipped, failed, gave up, excuse
+  if (/procrastinat|wasting time|lazy|junk|eating|skipped|failed|gave up|excuse|quit|wasted|distracted|overthinking/i.test(msgLower)) {
+    return { expression_id: "exp_annoyed", confidence: 0.75 };
+  }
+
+  return null; // No strong keyword match, let Groq decide
+};
+
 export const handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
@@ -70,16 +97,30 @@ export const handler = async (event) => {
     const distractionsCount = userContext?.distractionsCount || 0;
     const stability = userContext?.stability || 0.5;
 
-    const emotionPrompt = `Respond with ONLY valid JSON in this exact format:
-{"expression_id":"exp_angry","dialogue":"message here"}
+    // Check for strong keyword matches first (safety fallback)
+    const keywordMatch = detectEmotionByKeywords(message);
+
+    const emotionPrompt = `You are Aoi Hinami, a cold, calculated character that assesses user behavior and responds with appropriate expressions.
+
+Analyze this user input and select the most appropriate emotion:
 
 User said: "${message}"
 Daily Progress: ${dailyProgress}%
 Distractions: ${distractionsCount}
 Stability: ${(stability * 100).toFixed(0)}%
 
-Choose expression: exp_angry, exp_annoyed, exp_satisfied, or exp_smiling_audit.
-Keep dialogue under 20 words. Act as Aoi Hinami - cold, calculated, direct.`;
+EMOTION CATEGORIES (pick ONE):
+- exp_angry: User is depressed, down, overwhelmed, anxious, or emotionally struggling
+- exp_smiling: User is enthusiastic, happy, optimistic, or excited about something
+- exp_satisfied: User completed/finished a task, accomplished a goal, studied, exercised, or did something productive
+- exp_annoyed: User is procrastinating, wasting time, making excuses, eating junk, or complaining
+
+${keywordMatch ? `KEYWORD HINT: Message contains keywords suggesting "${keywordMatch.expression_id}" (confidence: ${keywordMatch.confidence})` : "No strong keyword markers detected - use contextual analysis."}
+
+Respond with ONLY valid JSON:
+{"expression_id":"exp_angry","dialogue":"message here"}
+
+Keep dialogue under 20 words. Match Aoi Hinami's cold, direct personality.`;
 
     let emotionText = "";
 
@@ -94,8 +135,21 @@ Keep dialogue under 20 words. Act as Aoi Hinami - cold, calculated, direct.`;
     let emotionData = { expression_id: "exp_annoyed", dialogue: "Processing..." };
     try {
       emotionData = JSON.parse(emotionText);
+      
+      // Validate expression_id is one of the allowed emotions
+      const allowedEmotions = ["exp_angry", "exp_smiling", "exp_satisfied", "exp_annoyed"];
+      if (!allowedEmotions.includes(emotionData.expression_id)) {
+        console.warn(`Invalid emotion "${emotionData.expression_id}", falling back to keyword match or default`);
+        if (keywordMatch) {
+          emotionData.expression_id = keywordMatch.expression_id;
+        }
+      }
     } catch {
-      console.warn("Failed to parse emotion JSON, using default");
+      console.warn("Failed to parse emotion JSON, using keyword fallback or default");
+      if (keywordMatch) {
+        emotionData.expression_id = keywordMatch.expression_id;
+        emotionData.dialogue = "Pattern recognized.";
+      }
     }
 
     return {

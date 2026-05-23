@@ -1,4 +1,3 @@
-import cors from "cors";
 import "dotenv/config";
 import express from "express";
 import multer from "multer";
@@ -189,26 +188,21 @@ const upload = multer({
 });
 
 // ============================================================================
-// CORS MUST BE FIRST - Handle preflight OPTIONS requests before any routing
+// CORS MUST BE FIRST - Handle ALL CORS requests with explicit headers
 // ============================================================================
-app.use(cors({
-  origin: [
-    "https://rachith183.github.io",
-    "http://localhost:3000",
-    "http://localhost:3001"
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// Manual preflight handler - explicitly respond to OPTIONS with CORS headers
-app.options('*', (req, res) => {
+app.use((req, res, next) => {
+  // Set CORS headers on every response
   res.header('Access-Control-Allow-Origin', 'https://rachith183.github.io');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
   res.header('Access-Control-Allow-Credentials', 'true');
-  res.sendStatus(200);
+  
+  // Handle OPTIONS requests immediately
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  
+  next();
 });
 
 // ============================================================================

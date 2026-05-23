@@ -2,7 +2,7 @@
   "buildCommand": "npm install",
   "functions": {
     "api/index.js": {
-      "runtime": "nodejs20.x",
+      "runtime": "nodejs@20",
       "memory": 512,
       "maxDuration": 60
     }

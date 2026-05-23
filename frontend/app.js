@@ -1233,8 +1233,8 @@ async function generateAndPlayAudio(text) {
             utterance.voice = characterVoiceProfile;
         }
         
-        // Soft, calm, slow-paced, collected, feminine-human voice cadence
-        utterance.rate = 0.72;      // Deliberately slow and composed pacing
+        // Soft, calm, medium-slow, collected, feminine-human voice cadence
+        utterance.rate = 0.88;      // Medium to slightly slow paced
         utterance.pitch = 1.05;     // Soft, warm, natural feminine pitch
         utterance.volume = 1.0;
         

@@ -135,26 +135,30 @@ let synthesisEngineTimelineLoop = null;
 function getHinamiVoiceProfile() {
     const voices = window.speechSynthesis.getVoices();
     
-    // Priority 1: High-clarity Premium Web Streams
-    let target = voices.find(v => 
-        v.name.includes('Google US English') || 
-        v.name.includes('Natural') ||
-        v.name.includes('Aria') ||
-        v.name.includes('Zira')
-    );
+    // Priority 1: Premium Natural Female Voices
+    let target = voices.find(v => {
+        const name = v.name.toLowerCase();
+        const isNatural = name.includes('natural');
+        const isFemale = name.includes('aria') || name.includes('jenny') || name.includes('sara') || name.includes('zira') || name.includes('hazel') || name.includes('samantha') || name.includes('victoria') || name.includes('female') || name.includes('zira');
+        return isNatural && isFemale;
+    });
     if (target) {
-        console.log('✅ Hinami voice (Priority 1 - Premium):', target.name);
+        console.log('✅ Hinami voice (Priority 1 - Natural Female):', target.name);
         return target;
     }
     
-    // Priority 2: Clear, Mature Female Operating System Voices
+    // Priority 2: Standard clear female voices
     target = voices.find(v => 
+        v.name.includes('Aria') || 
+        v.name.includes('Google US English') ||
         v.name.includes('Samantha') || 
         v.name.includes('Hazel') ||
-        v.name.includes('Victoria')
+        v.name.includes('Zira') ||
+        v.name.includes('Victoria') ||
+        v.name.includes('Jenny')
     );
     if (target) {
-        console.log('✅ Hinami voice (Priority 2 - Mature Female):', target.name);
+        console.log('✅ Hinami voice (Priority 2 - Standard Female):', target.name);
         return target;
     }
     
@@ -1229,9 +1233,9 @@ async function generateAndPlayAudio(text) {
             utterance.voice = characterVoiceProfile;
         }
         
-        // Aoi Hinami voice cadence: calm, collected, slow, analytical
-        utterance.rate = 0.75;      // 25% slower than normal - calculated, deliberate pacing
-        utterance.pitch = 0.85;     // Lower pitch - grounded, authoritative, cold composure
+        // Soft, calm, slow-paced, collected, feminine-human voice cadence
+        utterance.rate = 0.72;      // Deliberately slow and composed pacing
+        utterance.pitch = 1.05;     // Soft, warm, natural feminine pitch
         utterance.volume = 1.0;
         
         // Calculate duration based on slower speech rate

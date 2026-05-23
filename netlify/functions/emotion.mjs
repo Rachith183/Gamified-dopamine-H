@@ -35,7 +35,7 @@ const callGroq = async (prompt) => {
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           messages: [{ role: "user", content: prompt }],
-          max_tokens: 100
+          max_tokens: 150
         })
       });
 
@@ -54,31 +54,23 @@ const callGroq = async (prompt) => {
   throw new Error("All Groq keys exhausted");
 };
 
-// Keyword-based emotion detection for safety fallback
+// Keyword-based emotion detection for safety
 const detectEmotionByKeywords = (message) => {
   const msgLower = message.toLowerCase();
 
-  // Angry: depressed, down, sad, worthless, hopeless, crying, suicidal, anxious
   if (/depressed|down|sad|worthless|hopeless|crying|suicidal|anxious|overwhelmed|stressed/i.test(msgLower)) {
-    return { expression_id: "exp_angry", confidence: 0.9 };
+    return "exp_angry";
   }
-
-  // Smiling: excited, happy, enthusiastic, stoked, great, amazing, awesome, love it
   if (/excited|happy|enthusiastic|stoked|great|amazing|awesome|love it|incredible|fantastic|best/i.test(msgLower)) {
-    return { expression_id: "exp_smiling", confidence: 0.85 };
+    return "exp_smiling";
   }
-
-  // Proud/Satisfied: completed, finished, done, accomplished, achieved, passed, succeeded, nailed it
   if (/completed|finished|done|accomplished|achieved|passed|succeeded|nailed|workout|exercise|studied|learned/i.test(msgLower)) {
-    return { expression_id: "exp_satisfied", confidence: 0.8 };
+    return "exp_satisfied";
   }
-
-  // Annoyed/Dissatisfied: procrastinating, wasting time, lazy, junk food, eating, skipped, failed, gave up, excuse
   if (/procrastinat|wasting time|lazy|junk|eating|skipped|failed|gave up|excuse|quit|wasted|distracted|overthinking/i.test(msgLower)) {
-    return { expression_id: "exp_annoyed", confidence: 0.75 };
+    return "exp_annoyed";
   }
-
-  return null; // No strong keyword match, let Groq decide
+  return null;
 };
 
 export const handler = async (event) => {
@@ -97,59 +89,56 @@ export const handler = async (event) => {
     const distractionsCount = userContext?.distractionsCount || 0;
     const stability = userContext?.stability || 0.5;
 
-    // Check for strong keyword matches first (safety fallback)
+    // Try keyword detection first (instant)
     const keywordMatch = detectEmotionByKeywords(message);
+    if (keywordMatch) {
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          expression_id: keywordMatch,
+          dialogue: "Pattern recognized."
+        })
+      };
+    }
 
-    const emotionPrompt = `You are Aoi Hinami, a cold, calculated character that assesses user behavior and responds with appropriate expressions.
-
-Analyze this user input and select the most appropriate emotion:
+    // If no keyword match, call Groq/Gemini
+    const emotionPrompt = `Respond with ONLY valid JSON in this exact format:
+{"expression_id":"exp_angry","dialogue":"message here"}
 
 User said: "${message}"
 Daily Progress: ${dailyProgress}%
 Distractions: ${distractionsCount}
 Stability: ${(stability * 100).toFixed(0)}%
 
-EMOTION CATEGORIES (pick ONE):
-- exp_angry: User is depressed, down, overwhelmed, anxious, or emotionally struggling
-- exp_smiling: User is enthusiastic, happy, optimistic, or excited about something
-- exp_satisfied: User completed/finished a task, accomplished a goal, studied, exercised, or did something productive
-- exp_annoyed: User is procrastinating, wasting time, making excuses, eating junk, or complaining
+Choose ONE emotion:
+- exp_angry: User is depressed/anxious/overwhelmed
+- exp_smiling: User is happy/excited/optimistic
+- exp_satisfied: User completed task/accomplished goal
+- exp_annoyed: User is procrastinating/wasting time
 
-${keywordMatch ? `KEYWORD HINT: Message contains keywords suggesting "${keywordMatch.expression_id}" (confidence: ${keywordMatch.confidence})` : "No strong keyword markers detected - use contextual analysis."}
-
-Respond with ONLY valid JSON:
-{"expression_id":"exp_angry","dialogue":"message here"}
-
-Keep dialogue under 20 words. Match Aoi Hinami's cold, direct personality.`;
+Keep dialogue under 20 words. Act as Aoi Hinami - cold, direct.`;
 
     let emotionText = "";
-
-    // Try Groq first, fall back to Gemini
     try {
       emotionText = await callGroq(emotionPrompt);
     } catch (groqErr) {
-      console.log("Groq failed, using Gemini:", groqErr.message);
-      emotionText = await callGemini(emotionPrompt);
+      console.log("Groq failed, trying Gemini:", groqErr.message);
+      try {
+        emotionText = await callGemini(emotionPrompt);
+      } catch (geminiErr) {
+        return {
+          statusCode: 503,
+          body: JSON.stringify({ error: "APIs busy, using default emotion" })
+        };
+      }
     }
 
     let emotionData = { expression_id: "exp_annoyed", dialogue: "Processing..." };
     try {
       emotionData = JSON.parse(emotionText);
-      
-      // Validate expression_id is one of the allowed emotions
-      const allowedEmotions = ["exp_angry", "exp_smiling", "exp_satisfied", "exp_annoyed"];
-      if (!allowedEmotions.includes(emotionData.expression_id)) {
-        console.warn(`Invalid emotion "${emotionData.expression_id}", falling back to keyword match or default`);
-        if (keywordMatch) {
-          emotionData.expression_id = keywordMatch.expression_id;
-        }
-      }
-    } catch {
-      console.warn("Failed to parse emotion JSON, using keyword fallback or default");
-      if (keywordMatch) {
-        emotionData.expression_id = keywordMatch.expression_id;
-        emotionData.dialogue = "Pattern recognized.";
-      }
+    } catch (parseErr) {
+      console.warn("JSON parse failed:", parseErr.message, "Raw:", emotionText);
     }
 
     return {

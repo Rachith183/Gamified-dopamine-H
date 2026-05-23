@@ -30,6 +30,11 @@ window.AOI_GEMINI_API_KEY = window.AOI_GEMINI_API_KEY_PRIMARY;
 
 window.AOI_GEMINI_MODEL = "gemini-2.5-flash";
 
+// Groq API keys (Direct Client-Side Fallback)
+window.AOI_GROQ_API_KEY_PRIMARY = "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";
+window.AOI_GROQ_API_KEY_SECONDARY = "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";
+window.AOI_GROQ_API_KEY_TERTIARY = "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";
+
 // ============================================================================
 // INITIALIZE FIREBASE
 // ============================================================================

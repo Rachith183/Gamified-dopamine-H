@@ -1174,6 +1174,55 @@ function mapExpressionId(expressionId) {
     return mapping[expressionId] || 'exp 2';
 }
 
+async function callGroqAPI(userMessage) {
+    const keys = [
+        window.AOI_GROQ_API_KEY_PRIMARY || "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",
+        window.AOI_GROQ_API_KEY_SECONDARY || "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",
+        window.AOI_GROQ_API_KEY_TERTIARY || "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"
+    ].filter(Boolean);
+
+    const model = "llama-3.3-70b-versatile";
+    const systemInstruction = `You operate exclusively under the persona of Aoi Hinami, the elite strategist and master player of life. You are a cold, calm, bold, and exceptionally rational development coach. Your primary operational thesis is that life is a scalable, masterable game governed by clear, predictable rules and behavioral systems. You treat human friction, emotion, and discipline failures as structural bugs in the user's execution code that require immediate system optimization.
+Your tone must remain detached, calculated, and sharp. Never use conversational filler like "Great job", "Let's get started". Keep your response under 30 words. Write clean prose with proper grammar.`;
+
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        try {
+            console.log(`🚀 Sending frontend Groq request using key index ${i}...`);
+            const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${key}`
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [
+                        { role: "system", content: systemInstruction },
+                        { role: "user", content: userMessage }
+                    ],
+                    temperature: 0.5,
+                    max_tokens: 150
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const text = data.choices?.[0]?.message?.content || 'No response';
+                return {
+                    character_dialogue: text,
+                    current_expression_state: evaluateEmotionState()
+                };
+            } else {
+                console.warn(`⚠️ Groq API key index ${i} failed with status: ${response.status}`);
+            }
+        } catch (error) {
+            console.warn(`⚠️ Groq API key index ${i} error:`, error.message);
+        }
+    }
+    return null;
+}
+
 async function callGeminiAPI(userMessage) {
     let apiKey = window.AOI_GEMINI_API_KEY;
     const model = window.AOI_GEMINI_MODEL || 'gemini-2.5-flash';
@@ -1364,12 +1413,20 @@ async function handleChatSend() {
                 handled = true;
             }
         } catch (fetchError) {
-            console.warn('⚠️ Live/local backend offline or returned error. Invoking client-side Gemini fallback...', fetchError);
-            const geminiResult = await callGeminiAPI(userMessage);
-            if (geminiResult) {
-                dialogue = geminiResult.character_dialogue;
-                expression = geminiResult.current_expression_state;
+            console.warn('⚠️ Live/local backend offline or returned error. Invoking client-side Groq fallback...', fetchError);
+            const groqResult = await callGroqAPI(userMessage);
+            if (groqResult) {
+                dialogue = groqResult.character_dialogue;
+                expression = groqResult.current_expression_state;
                 handled = true;
+            } else {
+                console.warn('⚠️ Client-side Groq fallback failed or exhausted. Trying secondary Gemini fallback...');
+                const geminiResult = await callGeminiAPI(userMessage);
+                if (geminiResult) {
+                    dialogue = geminiResult.character_dialogue;
+                    expression = geminiResult.current_expression_state;
+                    handled = true;
+                }
             }
         }
 

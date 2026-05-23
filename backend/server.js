@@ -1920,8 +1920,9 @@ app.use((error, request, response, next) => {
 });
 
 const isFirebaseRuntime = Boolean(process.env.FUNCTION_TARGET || process.env.K_SERVICE);
+const isVercelRuntime = Boolean(process.env.VERCEL || process.env.VERCEL_ENV);
 
-if (!isFirebaseRuntime) {
+if (!isFirebaseRuntime && !isVercelRuntime) {
   app.listen(port, () => {
     console.log(`Interactive Character Build AI is running at http://localhost:${port}`);
     console.log(`🤖 Starting with model: ${getActiveModel()}`);
@@ -1935,3 +1936,6 @@ export const api = onRequest({
   timeoutSeconds: 120,
   memory: "512MiB"
 }, app);
+
+// Export for Vercel
+export default app;

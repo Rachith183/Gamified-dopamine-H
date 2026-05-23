@@ -1,5 +1,4 @@
 {
   "buildCommand": "npm install",
-  "framework": "express",
-  "public": "frontend"
+  "framework": "express"
 }

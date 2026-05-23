@@ -867,7 +867,15 @@ const schemaDefinition = {
   required: ["expression_state", "verbal_critique", "assigned_track", "execution_paradigm", "ui_accent_color", "battle_plan", "reward_shop_refresh"]
 };
 
-app.use(cors());
+// Configure CORS to allow GitHub Pages frontend
+app.use(cors({
+  origin: [
+    "https://rachith183.github.io",
+    "http://localhost:3000",
+    "http://localhost:3001"
+  ],
+  credentials: true
+}));
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(frontendDirectory));
 app.use("/layers", express.static(layersDirectory));

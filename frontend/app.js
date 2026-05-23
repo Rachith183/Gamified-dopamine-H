@@ -135,80 +135,44 @@ let synthesisEngineTimelineLoop = null;
 function getHinamiVoiceProfile() {
     const voices = window.speechSynthesis.getVoices();
     
-    // Helper to check if a voice is female
-    const isFemaleVoice = (v) => {
+    // Priority 1: High-clarity Premium Web Streams
+    let target = voices.find(v => 
+        v.name.includes('Google US English') || 
+        v.name.includes('Natural') ||
+        v.name.includes('Aria') ||
+        v.name.includes('Zira')
+    );
+    if (target) {
+        console.log('✅ Hinami voice (Priority 1 - Premium):', target.name);
+        return target;
+    }
+    
+    // Priority 2: Clear, Mature Female Operating System Voices
+    target = voices.find(v => 
+        v.name.includes('Samantha') || 
+        v.name.includes('Hazel') ||
+        v.name.includes('Victoria')
+    );
+    if (target) {
+        console.log('✅ Hinami voice (Priority 2 - Mature Female):', target.name);
+        return target;
+    }
+    
+    // Priority 3: Region/Gender Profile Scan
+    target = voices.find(v => {
         const name = v.name.toLowerCase();
-        return name.includes('aria') || name.includes('jenny') || name.includes('sara') || 
-               name.includes('zira') || name.includes('hazel') || name.includes('samantha') || 
-               name.includes('victoria') || name.includes('female') || name.includes('woman') || 
-               name.includes('hazel') || name.includes('sonia') || name.includes('libby');
-    };
-
-    // 1. US English (en-US) + Natural + Female
-    let target = voices.find(v => {
-        const lang = v.lang.toLowerCase();
-        const name = v.name.toLowerCase();
-        return (lang.startsWith('en-us') || lang === 'en_us') && name.includes('natural') && isFemaleVoice(v);
+        const isEnglish = v.lang.startsWith('en-US') || v.lang.startsWith('en-GB');
+        const isFemale = name.includes('female') || name.includes('woman') || !name.includes('male');
+        return isEnglish && isFemale;
     });
     if (target) {
-        console.log('✅ Hinami voice (Priority 1 - US Natural Female):', target.name);
+        console.log('✅ Hinami voice (Priority 3 - Region Scan):', target.name);
         return target;
     }
-
-    // 2. UK English (en-GB) + Natural + Female
-    target = voices.find(v => {
-        const lang = v.lang.toLowerCase();
-        const name = v.name.toLowerCase();
-        return (lang.startsWith('en-gb') || lang === 'en_gb') && name.includes('natural') && isFemaleVoice(v);
-    });
-    if (target) {
-        console.log('✅ Hinami voice (Priority 2 - UK Natural Female):', target.name);
-        return target;
-    }
-
-    // 3. US English (en-US) + Female
-    target = voices.find(v => {
-        const lang = v.lang.toLowerCase();
-        return (lang.startsWith('en-us') || lang === 'en_us') && isFemaleVoice(v);
-    });
-    if (target) {
-        console.log('✅ Hinami voice (Priority 3 - US Female):', target.name);
-        return target;
-    }
-
-    // 4. UK English (en-GB) + Female
-    target = voices.find(v => {
-        const lang = v.lang.toLowerCase();
-        return (lang.startsWith('en-gb') || lang === 'en_gb') && isFemaleVoice(v);
-    });
-    if (target) {
-        console.log('✅ Hinami voice (Priority 4 - UK Female):', target.name);
-        return target;
-    }
-
-    // 5. General English + Female
-    target = voices.find(v => {
-        const lang = v.lang.toLowerCase();
-        return lang.startsWith('en') && isFemaleVoice(v);
-    });
-    if (target) {
-        console.log('✅ Hinami voice (Priority 5 - English Female):', target.name);
-        return target;
-    }
-
-    // Fallback: First available en-US or en-GB voice
-    target = voices.find(v => {
-        const lang = v.lang.toLowerCase();
-        return lang.startsWith('en-us') || lang.startsWith('en-gb');
-    });
-    if (target) {
-        console.log('✅ Hinami voice (Priority 6 - English Fallback):', target.name);
-        return target;
-    }
-
-    // Ultimate fallback: First available voice
+    
+    // Fallback: First available voice
     if (voices.length > 0) {
-        console.log('ℹ️ Hinami voice (Priority 7 - Ultimate Fallback):', voices[0].name);
+        console.log('ℹ️ Hinami voice (Fallback):', voices[0].name);
         return voices[0];
     }
     
@@ -276,10 +240,10 @@ const DOM = {
     monthlyDistractionCount: document.getElementById('monthly-distraction-count'),
     distractionEntries: document.getElementById('distraction-entries'),
     profileForm: document.getElementById('profile-form'),
-    academicDetails: document.getElementById('input-academic-details'),
-    routineConstraints: document.getElementById('input-routine-constraints'),
-    physicalMetrics: document.getElementById('input-physical-metrics'),
-    lifestyleRegimen: document.getElementById('input-skincare-diet'),
+    academicDetails: document.getElementById('academic-details'),
+    routineConstraints: document.getElementById('routine-constraints'),
+    physicalMetrics: document.getElementById('physical-metrics'),
+    lifestyleRegimen: document.getElementById('lifestyle-regimen'),
     panelLivePlan: document.getElementById('panel-live-plan'),
     panelRewards: document.getElementById('panel-rewards'),
     planTimerDisplay: document.getElementById('plan-timer-display'),
@@ -844,7 +808,7 @@ function initAnimationEngine() {
     if (!avatarBase) {
         avatarBase = document.createElement('img');
         avatarBase.id = 'avatar-base';
-        avatarBase.className = 'avatar-layer character-sprite';
+        avatarBase.className = 'avatar-layer';
         avatarBase.src = './layers/base layers/base.png';
         avatarBase.alt = 'Character Base';
         avatarBase.style.maxWidth = '100%';
@@ -885,10 +849,9 @@ function updateXPSystemDisplays() {
 }
 
 async function fetchAndGenerateBattlePlan() {
-    const apiBaseUrl = window.AOI_API_BASE_URL || 'http://localhost:3000';
     try {
         console.log('🎯 Fetching AI-generated battle plan...');
-        const response = await fetch(`${apiBaseUrl}/api/battle-mode/daily-setup`);
+        const response = await fetch('/api/battle-mode/daily-setup');
         const data = await response.json();
         
         // Transform AI tasks with proper structure
@@ -1174,62 +1137,13 @@ function mapExpressionId(expressionId) {
     return mapping[expressionId] || 'exp 2';
 }
 
-async function callGroqAPI(userMessage) {
-    const keys = [
-        window.AOI_GROQ_API_KEY_PRIMARY || "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",
-        window.AOI_GROQ_API_KEY_SECONDARY || "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",
-        window.AOI_GROQ_API_KEY_TERTIARY || "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"
-    ].filter(Boolean);
-
-    const model = "llama-3.3-70b-versatile";
-    const systemInstruction = `You operate exclusively under the persona of Aoi Hinami, the elite strategist and master player of life. You are a cold, calm, bold, and exceptionally rational development coach. Your primary operational thesis is that life is a scalable, masterable game governed by clear, predictable rules and behavioral systems. You treat human friction, emotion, and discipline failures as structural bugs in the user's execution code that require immediate system optimization.
-Your tone must remain detached, calculated, and sharp. Never use conversational filler like "Great job", "Let's get started". Keep your response under 30 words. Write clean prose with proper grammar.`;
-
-    for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        try {
-            console.log(`🚀 Sending frontend Groq request using key index ${i}...`);
-            const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${key}`
-                },
-                body: JSON.stringify({
-                    model: model,
-                    messages: [
-                        { role: "system", content: systemInstruction },
-                        { role: "user", content: userMessage }
-                    ],
-                    temperature: 0.5,
-                    max_tokens: 150
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                const text = data.choices?.[0]?.message?.content || 'No response';
-                return {
-                    character_dialogue: text,
-                    current_expression_state: evaluateEmotionState()
-                };
-            } else {
-                console.warn(`⚠️ Groq API key index ${i} failed with status: ${response.status}`);
-            }
-        } catch (error) {
-            console.warn(`⚠️ Groq API key index ${i} error:`, error.message);
-        }
-    }
-    return null;
-}
-
 async function callGeminiAPI(userMessage) {
     let apiKey = window.AOI_GEMINI_API_KEY;
     const model = window.AOI_GEMINI_MODEL || 'gemini-2.5-flash';
     
     if (!apiKey) {
-        apiKey = window.AOI_GEMINI_API_KEY_PRIMARY || 'AIzaSyDD48qPt3gRpvfnWxY_6Zo8nW1JIRdL4Y8';
-        window.AOI_GEMINI_API_KEY = apiKey;
+        console.error('❌ Gemini API key not configured. Use backend API instead.');
+        return { character_dialogue: 'API key not configured', current_expression_state: 'neutral' };
     }
     
     const tryRequest = async (key) => {
@@ -1241,13 +1155,7 @@ async function callGeminiAPI(userMessage) {
                     parts: [{
                         text: userMessage
                     }]
-                }],
-                systemInstruction: {
-                    parts: [{
-                        text: `You operate exclusively under the persona of Aoi Hinami, the elite strategist and master player of life. You are a cold, calm, bold, and exceptionally rational development coach. Your primary operational thesis is that life is a scalable, masterable game governed by clear, predictable rules and behavioral systems. You treat human friction, emotion, and discipline failures as structural bugs in the user's execution code that require immediate system optimization.
-Your tone must remain detached, calculated, and sharp. Never use conversational filler like "Great job", "Let's get started". Keep your response under 30 words. Write clean prose with proper grammar.`
-                    }]
-                }
+                }]
             })
         });
         if (!response.ok) {
@@ -1267,7 +1175,7 @@ Your tone must remain detached, calculated, and sharp. Never use conversational 
     } catch (error) {
         console.warn('⚠️ Primary/current frontend Gemini API call failed:', error);
         
-        const secondaryKey = window.AOI_GEMINI_API_KEY_SECONDARY || 'AIzaSyBgqQB51TRk69PxqrvP4tPfQtvaqjEwj34';
+        const secondaryKey = window.AOI_GEMINI_API_KEY_SECONDARY;
         if (apiKey !== secondaryKey) {
             console.log('🔄 Swapping to secondary frontend Gemini API key...');
             window.AOI_GEMINI_API_KEY = secondaryKey;
@@ -1321,9 +1229,9 @@ async function generateAndPlayAudio(text) {
             utterance.voice = characterVoiceProfile;
         }
         
-        // Soft, calm, medium to slightly slow, collected feminine-human voice cadence
-        utterance.rate = 0.92;      // Medium to slightly slow paced (slightly faster than 0.88)
-        utterance.pitch = 0.93;     // Slightly low pitch for warm composure
+        // Aoi Hinami voice cadence: calm, collected, slow, analytical
+        utterance.rate = 0.75;      // 25% slower than normal - calculated, deliberate pacing
+        utterance.pitch = 0.85;     // Lower pitch - grounded, authoritative, cold composure
         utterance.volume = 1.0;
         
         // Calculate duration based on slower speech rate
@@ -1385,74 +1293,66 @@ async function handleChatSend() {
         };
         
         // Call emotion API for real-time expression response
-        let dialogue = '';
-        let expression = 'exp 2 - annoyed or disatisfied';
-        let handled = false;
-
-        try {
-            const apiBaseUrl = window.AOI_API_BASE_URL || 'http://localhost:3000';
-            const emotionResponse = await fetch(`${apiBaseUrl}/api/emotion`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message: userMessage,
-                    userId: AppState.userId,
-                    userContext: userContext
-                })
-            }).then(r => r.json());
+        const emotionResponse = await fetch('/api/emotion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: userMessage,
+                userId: AppState.userId,
+                userContext: userContext
+            })
+        }).then(r => r.json());
+        
+        // Update character expression based on emotion response
+        if (emotionResponse && emotionResponse.expression_id) {
+            const expressionMap = {
+                'exp_angry': 'exp 1 - angry',
+                'exp_annoyed': 'exp 2 - annoyed or disatisfied',
+                'exp_satisfied': 'exp3-proud or satisfied',
+                'exp_smiling_audit': 'exp 4 - smiling'
+            };
             
-            if (emotionResponse && emotionResponse.dialogue) {
-                dialogue = emotionResponse.dialogue;
-                const expressionMap = {
-                    'exp_angry': 'exp 1 - angry',
-                    'exp_annoyed': 'exp 2 - annoyed or disatisfied',
-                    'exp_satisfied': 'exp3-proud or satisfied',
-                    'exp_smiling_audit': 'exp 4 - smiling'
-                };
-                expression = expressionMap[emotionResponse.expression_id] || 'exp 2 - annoyed or disatisfied';
-                handled = true;
-            }
-        } catch (fetchError) {
-            console.warn('⚠️ Live/local backend offline or returned error. Invoking client-side Groq fallback...', fetchError);
-            const groqResult = await callGroqAPI(userMessage);
-            if (groqResult) {
-                dialogue = groqResult.character_dialogue;
-                expression = groqResult.current_expression_state;
-                handled = true;
-            } else {
-                console.warn('⚠️ Client-side Groq fallback failed or exhausted. Trying secondary Gemini fallback...');
-                const geminiResult = await callGeminiAPI(userMessage);
-                if (geminiResult) {
-                    dialogue = geminiResult.character_dialogue;
-                    expression = geminiResult.current_expression_state;
-                    handled = true;
-                }
-            }
-        }
-
-        if (handled && dialogue) {
-            const aiMsgEl = document.createElement('div');
-            aiMsgEl.className = 'chat-message ai';
-            aiMsgEl.innerHTML = `<p>${escapeHtml(dialogue)}</p>`;
-            DOM.chatHistory?.appendChild(aiMsgEl);
-            
+            const expression = expressionMap[emotionResponse.expression_id] || 'exp 2 - annoyed or disatisfied';
             switchAvatarExpression(expression);
-            console.log('🎭 Expression updated to:', expression);
+            console.log('🎭 Emotion expression updated to:', expression);
             
-            await generateAndPlayAudio(dialogue);
-        } else {
-            const aiMsgEl = document.createElement('div');
-            aiMsgEl.className = 'chat-message ai';
-            aiMsgEl.innerHTML = `<p>System temporarily unresponsive. Check your network or API keys.</p>`;
-            DOM.chatHistory?.appendChild(aiMsgEl);
-            switchAvatarExpression('exp 2 - annoyed or disatisfied');
+            // Display emotion-based dialogue
+            if (emotionResponse.dialogue) {
+                const aiMsgEl = document.createElement('div');
+                aiMsgEl.className = 'chat-message ai';
+                aiMsgEl.innerHTML = `<p>${escapeHtml(emotionResponse.dialogue)}</p>`;
+                DOM.chatHistory?.appendChild(aiMsgEl);
+                
+                // Play audio with the emotional response
+                await generateAndPlayAudio(emotionResponse.dialogue);
+            }
         }
-
-        // Try calling the full backend API for background updates (fail silently)
-        try {
-            await callBackendAPI(userMessage);
-        } catch (e) {
-            console.log("Deferred backend updates offline.");
+        
+        // Also call main backend API for battle plan and rewards
+        const response = await callBackendAPI(userMessage);
+        
+        // Handle legacy Aoi Hinami response format
+        if (response && (response.verbal_critique || response.character_dialogue)) {
+            const dialogue = response.verbal_critique || response.character_dialogue || '';
+            
+            // Only display if we didn't already show emotion response
+            if (!emotionResponse || !emotionResponse.dialogue) {
+                const aiMsgEl = document.createElement('div');
+                aiMsgEl.className = 'chat-message ai';
+                aiMsgEl.innerHTML = `<p>${escapeHtml(dialogue)}</p>`;
+                DOM.chatHistory?.appendChild(aiMsgEl);
+                
+                // Handle expression switching
+                if (response.expression_state) {
+                    switchAvatarExpression(response.expression_state);
+                    console.log('🎭 Expression switched to:', response.expression_state);
+                } else if (response.current_expression_state) {
+                    switchAvatarExpression(response.current_expression_state);
+                }
+                
+                // Play audio with the verbal critique
+                await generateAndPlayAudio(dialogue);
+            }
         }
         
         if (DOM.chatHistory) {
@@ -1477,43 +1377,32 @@ function initChat() {
 // GOAL TRACKING
 // ============================================================================
 
-function updateProgressRing(ringId, textId, currentXP, targetMax) {
-    const ringElement = document.getElementById(ringId);
-    const textElement = document.getElementById(textId);
-    if (!ringElement) return;
-    
-    try {
-        let radius = 50; // Fallback
-        if (ringElement.r && ringElement.r.baseVal) {
-            radius = ringElement.r.baseVal.value;
-        } else {
-            const rAttr = ringElement.getAttribute("r");
-            if (rAttr) radius = parseFloat(rAttr);
-        }
-        
-        const circumference = 2 * Math.PI * radius;
-        ringElement.style.strokeDasharray = `${circumference} ${circumference}`;
-        
-        const progressPercentage = Math.min((currentXP / targetMax), 1);
-        const strokeOffset = circumference - (progressPercentage * circumference);
-        ringElement.style.strokeDashoffset = strokeOffset;
-        
-        if (textElement) {
-            if (ringId === "circle-midterm-offset") {
-                textElement.innerText = `${(currentXP / 1000).toFixed(1)}k`;
-            } else {
-                textElement.innerText = currentXP.toLocaleString();
-            }
-        }
-    } catch (e) {
-        console.error(`[PROGRESS RING ERROR] Failed to update progress ring ${ringId}:`, e);
-    }
-}
-
 function updateCircularProgressRings(currentDaily, currentMid, currentLong) {
-    updateProgressRing("circle-daily-offset", "text-daily-xp", currentDaily, 300);
-    updateProgressRing("circle-midterm-offset", "text-midterm-xp", currentMid, 50000);
-    updateProgressRing("circle-longterm-offset", "text-longterm-xp", currentLong, 300);
+    const CIRCUMFERENCE = 314.16;
+
+    // 1. Calculate explicit percentages capped at 100%
+    const dailyPct = Math.min((currentDaily / 300) * 100, 100);
+    const midtermPct = Math.min((currentMid / 50000) * 100, 100);
+    const longtermPct = Math.min((currentDaily / 300) * 100, 100);
+
+    // 2. Map values directly to SVG geometric properties
+    const dailyOffset = CIRCUMFERENCE - (dailyPct / 100) * CIRCUMFERENCE;
+    const midtermOffset = CIRCUMFERENCE - (midtermPct / 100) * CIRCUMFERENCE;
+    const longtermOffset = CIRCUMFERENCE - (longtermPct / 100) * CIRCUMFERENCE;
+
+    // 3. Update DOM attributes and inner label readouts
+    const elDaily = document.getElementById("circle-daily-offset");
+    const elMid = document.getElementById("circle-midterm-offset");
+    const elLong = document.getElementById("circle-longterm-offset");
+
+    if (elDaily) elDaily.style.strokeDashoffset = dailyOffset;
+    if (elMid) elMid.style.strokeDashoffset = midtermOffset;
+    if (elLong) elLong.style.strokeDashoffset = longtermOffset;
+
+    // Update center numeric text values
+    document.getElementById("text-daily-xp").innerText = currentDaily;
+    document.getElementById("text-midterm-xp").innerText = `${(currentMid / 1000).toFixed(1)}k`;
+    document.getElementById("text-longterm-xp").innerText = currentLong;
 }
 
 function updateGoalProgress() {
@@ -1545,7 +1434,24 @@ function updateDistractionCounts() {
 
 async function handleDistractionSubmit(e) {
     e.preventDefault();
-    document.getElementById("btn-log-distraction")?.click();
+    
+    const formData = new FormData(DOM.distractionForm);
+    const entry = {
+        type: formData.get('distraction-type'),
+        date: formData.get('distraction-date'),
+        time: formData.get('distraction-time'),
+        duration: parseInt(formData.get('distraction-duration'), 10),
+        timestamp: new Date().toISOString()
+    };
+    
+    AppState.userDistractions.push(entry);
+    updateDistractionCounts();
+    DOM.distractionForm.reset();
+    
+    const newExpression = evaluateEmotionState();
+    if (newExpression !== AppState.currentExpression) {
+        switchAvatarExpression(newExpression);
+    }
 }
 
 function initDistractionTracker() {
@@ -1558,7 +1464,20 @@ function initDistractionTracker() {
 
 async function handleProfileSubmit(e) {
     e.preventDefault();
-    document.getElementById("btn-save-profile")?.click();
+    
+    AppState.userContext = {
+        academic: DOM.academicDetails?.value || '',
+        routine: DOM.routineConstraints?.value || '',
+        physical: DOM.physicalMetrics?.value || '',
+        lifestyle: DOM.lifestyleRegimen?.value || ''
+    };
+    
+    console.log('Profile saved (local):', AppState.userContext);
+    
+    const newExpression = evaluateEmotionState();
+    if (newExpression !== AppState.currentExpression) {
+        switchAvatarExpression(newExpression);
+    }
 }
 
 function initProfileForm() {
@@ -1650,9 +1569,8 @@ const BattleModeLiveEngine = {
 
     // ASYNC GROQ BRIDGE PARSING PIPELINE
     fetchAiTailoredDirectives: async function() {
-        const apiBaseUrl = window.AOI_API_BASE_URL || 'http://localhost:3000';
         try {
-            const response = await fetch(`${apiBaseUrl}/api/battle-mode/daily-setup`);
+            const response = await fetch('/api/battle-mode/daily-setup');
             if (!response.ok) throw new Error("Server communication fault");
             const data = await response.json();
 
@@ -1758,15 +1676,28 @@ const BattleModeLiveEngine = {
 
     // PROGRESS RING TRIGONOMETRIC INTERFACES
     updateCircularProgressRings: function() {
-        updateProgressRing("circle-daily-offset", "text-daily-xp", this.state.currentDailyXp, this.state.dailyMaxXp);
-        updateProgressRing("circle-midterm-offset", "text-midterm-xp", this.state.midTermXp, this.state.midTermGoalXp);
-        updateProgressRing("circle-longterm-offset", "text-longterm-xp", this.state.currentDailyXp, this.state.dailyMaxXp);
+        const C = 314.16; // Exact circumference parameter mapping
         
-        // Overwrite the long-term text label to show the actual long-term XP value
-        const txtLong = document.getElementById("text-longterm-xp");
-        if (txtLong) txtLong.innerText = this.state.longTermXp;
+        const dailyPct = Math.min((this.state.currentDailyXp / this.state.dailyMaxXp) * 100, 100);
+        const midtermPct = Math.min((this.state.midTermXp / this.state.midTermGoalXp) * 100, 100);
+        const longtermPct = Math.min((this.state.currentDailyXp / this.state.dailyMaxXp) * 100, 100); // Visual daily relative scale fix
 
+        const elDaily = document.getElementById("circle-daily-offset");
+        const elMid = document.getElementById("circle-midterm-offset");
+        const elLong = document.getElementById("circle-longterm-offset");
+
+        if (elDaily) elDaily.style.strokeDashoffset = C - (dailyPct / 100) * C;
+        if (elMid) elMid.style.strokeDashoffset = C - (midtermPct / 100) * C;
+        if (elLong) elLong.style.strokeDashoffset = C - (longtermPct / 100) * C;
+
+        const txtDaily = document.getElementById("text-daily-xp");
+        const txtMid = document.getElementById("text-midterm-xp");
+        const txtLong = document.getElementById("text-longterm-xp");
         const headerText = document.getElementById("live-xp-counter-top");
+
+        if (txtDaily) txtDaily.innerText = this.state.currentDailyXp;
+        if (txtMid) txtMid.innerText = `${(this.state.midTermXp / 1000).toFixed(1)}k`;
+        if (txtLong) txtLong.innerText = this.state.longTermXp;
         if (headerText) headerText.innerText = `BATTLE MODE ACTIVE // CURRENT DAILY XP: ${this.state.currentDailyXp} / ${this.state.dailyMaxXp}`;
     },
 
@@ -1901,377 +1832,3 @@ const BattleModeLiveEngine = {
 };
 
 document.addEventListener("DOMContentLoaded", () => BattleModeLiveEngine.init());
-
-// =========================================================================
-// RESILIENT FIRESTORE HANDSHAKE & DASHBOARD SYNC ENGINE
-// =========================================================================
-
-const DashboardCloudSyncEngine = {
-    // RESOLVE INTERFACE HANDSHAKE: Dynamically maps the correct active global database pointer
-    getDb: function() {
-        const db = window.firebaseDB || window.firestoreDB || window.db;
-        if (!db) {
-            console.warn("[HANDSHAKE WARN] Database reference not detected yet. Retrying context loop...");
-        }
-        return db;
-    },
-
-    // 1. PROFILE CONTEXT INTERFACE
-    saveProfileToFirebase: async function() {
-        const db = this.getDb();
-        if (!db) return alert("[HANDSHAKE ERROR] Cloud connection offline. Check config.js mapping.");
-
-        const payload = {
-            academic: document.getElementById("input-academic-details")?.value || "",
-            routine: document.getElementById("input-routine-constraints")?.value || "",
-            physical: document.getElementById("input-physical-metrics")?.value || "",
-            skincare: document.getElementById("input-skincare-diet")?.value || "",
-            timestamp: new Date().toISOString()
-        };
-
-        const btn = document.getElementById("btn-save-profile") || document.querySelector("button[onclick*='saveProfileToFirebase']");
-        if (btn) btn.innerText = "LINKING PROTOCOLS...";
-
-        try {
-            // Standard Firestore v8 Namespaced write structure
-            await db.collection('userProfiles').doc('currentProfile').set(payload);
-            alert("[FIRESTORE SUCCESS] Context payload successfully written to cloud.");
-        } catch (err) {
-            console.warn("Namespaced write failed, trying modular v9 compatibility fallback...", err);
-            try {
-                // Standalone Modular SDK v9 fallback injection handler
-                const { doc, setDoc } = window.FirebaseFirestore || {};
-                if (doc && setDoc) {
-                    await setDoc(doc(db, 'userProfiles', 'currentProfile'), payload);
-                    alert("[FIRESTORE SUCCESS] Context updated via Modular Adapter.");
-                } else {
-                    throw new Error("No usable Firestore SDK API structure found in scope.");
-                }
-            } catch (fallbackErr) {
-                console.error("Critical Connection Fault:", fallbackErr);
-                alert("[SYNC CRASH] Handshake rejected by database. See browser console for diagnostic logs.");
-            }
-        } finally {
-            if (btn) btn.innerText = "Save to Cloud";
-        }
-    },
-
-    loadProfileFromFirebase: function() {
-        const db = this.getDb();
-        if (!db) return;
-
-        const populateUI = (data) => {
-            if (document.getElementById("input-academic-details")) document.getElementById("input-academic-details").value = data.academic || "";
-            if (document.getElementById("input-routine-constraints")) document.getElementById("input-routine-constraints").value = data.routine || "";
-            if (document.getElementById("input-physical-metrics")) document.getElementById("input-physical-metrics").value = data.physical || "";
-            if (document.getElementById("input-skincare-diet")) document.getElementById("input-skincare-diet").value = data.skincare || "";
-        };
-
-        db.collection('userProfiles').doc('currentProfile').get()
-        .then((docSnap) => {
-            if (docSnap.exists) populateUI(docSnap.data());
-        })
-        .catch(() => {
-            try {
-                const { doc, getDoc } = window.FirebaseFirestore || {};
-                if (doc && getDoc) {
-                    getDoc(doc(db, 'userProfiles', 'currentProfile')).then(s => { if (s.exists()) populateUI(s.data()); });
-                }
-            } catch (e) { console.log("[INFO] Profile local sync deferred."); }
-        });
-    },
-
-    // 2. DISTRACTION TRACKER INTERFACE
-    logDistraction: async function() {
-        const db = this.getDb();
-        const typeEl = document.getElementById("select-distraction-type");
-        const dateEl = document.getElementById("input-distraction-date");
-        const timeEl = document.getElementById("input-distraction-time");
-        const durationEl = document.getElementById("input-distraction-duration");
-
-        if (!typeEl || !dateEl || !durationEl || !durationEl.value) {
-            alert("[INPUT ERROR] Please complete all parameters before logging.");
-            return;
-        }
-
-        const logEntry = {
-            type: typeEl.value,
-            date: dateEl.value, // Expected string formatting: YYYY-MM-DD
-            time: timeEl.value || "00:00",
-            duration: parseInt(durationEl.value, 10) || 0,
-            recordedAt: new Date().toISOString()
-        };
-
-        try {
-            await db.collection('distractionLogs').add(logEntry);
-            durationEl.value = ""; 
-            this.syncDistractionMetrics();
-        } catch (err) {
-            console.warn("Logging fallback invoked...");
-            try {
-                const { collection, addDoc } = window.FirebaseFirestore || {};
-                if (collection && addDoc) {
-                    await addDoc(collection(db, 'distractionLogs'), logEntry);
-                    durationEl.value = "";
-                    this.syncDistractionMetrics();
-                }
-            } catch (e) { console.error("Firestore dropped entry write execution:", e); }
-        }
-    },
-
-    syncDistractionMetrics: function() {
-        const db = this.getDb();
-        if (!db) return;
-
-        const processLogs = (querySnapshot) => {
-            const todayStr = new Date().toISOString().split('T')[0];
-            let todayMin = 0, weeklyMin = 0, monthlyMin = 0;
-            const now = new Date();
-
-            querySnapshot.forEach((docDoc) => {
-                const log = docDoc.data ? docDoc.data() : docDoc;
-                const logDate = new Date(log.date);
-                const duration = log.duration || 0;
-
-                if (log.date === todayStr) todayMin += duration;
-                
-                const daysDiff = (now - logDate) / (1000 * 60 * 60 * 24);
-                if (daysDiff <= 7) weeklyMin += duration;
-                if (daysDiff <= 30) monthlyMin += duration;
-            });
-
-            if (document.getElementById("today-distractions-count")) document.getElementById("today-distractions-count").innerText = todayMin;
-            if (document.getElementById("weekly-distractions-count")) document.getElementById("weekly-distractions-count").innerText = weeklyMin;
-            if (document.getElementById("monthly-distractions-count")) document.getElementById("monthly-distractions-count").innerText = monthlyMin;
-        };
-
-        db.collection('distractionLogs').get()
-        .then(processLogs)
-        .catch(() => {
-            try {
-                const { collection, getDocs } = window.FirebaseFirestore || {};
-                if (collection && getDocs) {
-                    getDocs(collection(db, 'distractionLogs')).then(processLogs);
-                }
-            } catch (e) { console.log("[INFO] Distraction lookup deferred."); }
-        });
-    },
-
-    // 3. DYNAMIC SYSTEM-CLOCK CALENDAR MATRIX GENERATION LAYER
-    renderFullMonthCalendar: function() {
-        const grid = document.getElementById("full-month-calendar-grid") || document.getElementById("calendar-grid");
-        if (!grid) return;
-        grid.innerHTML = "";
-
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth(); // 0-indexed (Jan = 0)
-        const todayDate = now.getDate();
-
-        // Get total days in the current month dynamically
-        const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-        // Set month & year title text
-        const titleEl = document.getElementById("calendar-month-year");
-        if (titleEl) {
-            const MONTH_NAMES = [
-                "January", "February", "March", "April", "May", "June", 
-                "July", "August", "September", "October", "November", "December"
-            ];
-            titleEl.textContent = `${MONTH_NAMES[currentMonth]} ${currentYear}`;
-        }
-
-        const historicalLedger = (window.BattleModeLiveEngine && window.BattleModeLiveEngine.state) 
-            ? window.BattleModeLiveEngine.state.calendarHistory || {} 
-            : {};
-
-        const currentXp = (window.BattleModeLiveEngine && window.BattleModeLiveEngine.state)
-            ? window.BattleModeLiveEngine.state.currentDailyXp || 0
-            : 0;
-
-        const todayKey = (window.BattleModeLiveEngine && window.BattleModeLiveEngine.state)
-            ? window.BattleModeLiveEngine.state.todayKey
-            : new Date().toISOString().split('T')[0];
-
-        for (let day = 1; day <= totalDays; day++) {
-            const formattedMonth = String(currentMonth + 1).padStart(2, '0');
-            const formattedDay = String(day).padStart(2, '0');
-            const loopDateStr = `${currentYear}-${formattedMonth}-${formattedDay}`;
-
-            const cell = document.createElement("div");
-            cell.className = "calendar-matrix-cell";
-
-            const dayLabel = document.createElement("span");
-            dayLabel.className = "day-number";
-            dayLabel.innerText = day;
-            cell.appendChild(dayLabel);
-
-            const status = historicalLedger[loopDateStr];
-
-            // Check if this day is today (active day)
-            const isToday = (day === todayDate && now.getMonth() === currentMonth && now.getFullYear() === currentYear);
-
-            if (isToday) {
-                cell.classList.add("today-active");
-                
-                // Active indicator with ⚡ icon
-                const indicator = document.createElement("div");
-                indicator.className = "active-indicator";
-                indicator.innerText = "⚡";
-                cell.appendChild(indicator);
-            } else if (status === 'PASSED') {
-                const checkMark = document.createElement("b");
-                checkMark.style = "color: #2ecc71; font-size: 14px; display:block; margin-top: 4px;";
-                checkMark.innerText = "✓";
-                cell.appendChild(checkMark);
-                cell.style.background = "rgba(46, 204, 113, 0.15)";
-                cell.style.borderColor = "#2ecc71";
-            } else if (status === 'FAILED') {
-                const crossMark = document.createElement("b");
-                crossMark.style = "color: #ff4d4d; font-size: 14px; display:block; margin-top: 4px;";
-                crossMark.innerText = "✗";
-                cell.appendChild(crossMark);
-                cell.style.background = "rgba(255, 77, 77, 0.15)";
-                cell.style.borderColor = "#ff4d4d";
-            } else {
-                const emptyDot = document.createElement("span");
-                emptyDot.style = "color: #444; font-size: 12px; display:block; margin-top: 4px;";
-                emptyDot.innerText = "-";
-                cell.appendChild(emptyDot);
-            }
-
-            grid.appendChild(cell);
-        }
-    }
-};
-
-// SAFE INITIALIZATION PIPELINE WITH LATENCY SAFETY BUFFER
-window.addEventListener("DOMContentLoaded", () => {
-    // Draw layout structure instantly using local metrics
-    DashboardCloudSyncEngine.renderFullMonthCalendar();
-
-    // 1. FORM INTERCEPTION: Profile save button click handler
-    document.getElementById("btn-save-profile")?.addEventListener("click", function(event) {
-        event.preventDefault(); // Prevents the browser from reloading and wiping inputs
-        
-        // Update local context state
-        AppState.userContext = {
-            academic: DOM.academicDetails?.value || '',
-            routine: DOM.routineConstraints?.value || '',
-            physical: DOM.physicalMetrics?.value || '',
-            skincare: DOM.lifestyleRegimen?.value || ''
-        };
-        console.log('Profile saved (local context):', AppState.userContext);
-
-        // Dynamic expression update
-        const newExpression = evaluateEmotionState();
-        if (newExpression !== AppState.currentExpression) {
-            switchAvatarExpression(newExpression);
-        }
-
-        DashboardCloudSyncEngine.saveProfileToFirebase();
-    });
-
-    // 2. FORM INTERCEPTION & DISTRACTION TRACKER ENGINE: Distraction log button click handler
-    document.getElementById("btn-log-distraction")?.addEventListener("click", function(event) {
-        // 1. Critical Intercept: Stops the browser from reloading and wiping data
-        event.preventDefault(); 
-
-        // 2. Fetch DOM input references
-        const typeEl = document.getElementById("select-distraction-type");
-        const dateEl = document.getElementById("input-distraction-date");
-        const durationEl = document.getElementById("input-distraction-duration");
-
-        // 3. Validation Gate
-        if (!typeEl || !dateEl || !durationEl || !durationEl.value) {
-            console.warn("[VALIDATION] Missing fields. Operation aborted.");
-            return;
-        }
-
-        // 4. Construct Payload
-        const logPayload = {
-            type: typeEl.value,
-            date: dateEl.value,
-            duration: parseInt(durationEl.value, 10) || 0,
-            id: Date.now()
-        };
-
-        try {
-            // 5. Pull, Push, and Commit to LocalStorage
-            let currentLogs = JSON.parse(localStorage.getItem("antigravity_logs") || "[]");
-            currentLogs.push(logPayload);
-            localStorage.setItem("antigravity_logs", JSON.stringify(currentLogs));
-
-            // 6. Visual Reset: Clear only the numeric input box, leaving selection intact
-            durationEl.value = ""; 
-
-            // 7. Dynamic Refresh: Recalculate today's totals immediately and re-render UI
-            updateDistractionUI();
-            
-            // Dynamic expression update based on logged distraction count
-            const newExpression = evaluateEmotionState();
-            if (newExpression !== AppState.currentExpression) {
-                switchAvatarExpression(newExpression);
-            }
-            
-            console.log(`[METRICS] Local Storage updated successfully.`);
-        } catch (e) {
-            console.error("[METRICS ERROR] Failed to save distraction entry:", e);
-        }
-    });
-
-    // Render distraction metrics and history list instantly on load
-    updateDistractionUI();
-
-    // Execute the cloud handshake check shortly after script loading completes
-    setTimeout(() => {
-        DashboardCloudSyncEngine.loadProfileFromFirebase();
-        DashboardCloudSyncEngine.syncDistractionMetrics();
-    }, 600);
-});
-
-// Distraction UI and History renderer
-function updateDistractionUI() {
-    try {
-        const todayStr = new Date().toISOString().split('T')[0];
-        const currentLogs = JSON.parse(localStorage.getItem("antigravity_logs") || "[]");
-        
-        // 5. METRIC CALCULATION LOOP (NUMBER GOES UP)
-        let totalMinutesToday = 0;
-        currentLogs.forEach(log => {
-            if (log.date === todayStr) {
-                totalMinutesToday += parseInt(log.duration, 10) || 0;
-            }
-        });
-
-        const displayCounter = document.getElementById("today-distractions-count");
-        if (displayCounter) {
-            displayCounter.innerText = `${totalMinutesToday} Min`;
-        }
-        
-        // 6. RECENT HISTORY DISPLAY (HISTORY SHOWS DOWN)
-        const historyContainer = document.getElementById("distraction-history-list");
-        if (historyContainer) {
-            historyContainer.innerHTML = "";
-            const sortedLogs = [...currentLogs].reverse();
-            sortedLogs.forEach(log => {
-                const item = document.createElement("div");
-                item.className = "distraction-history-item";
-                item.style = "padding: 8px; margin-bottom: 8px; background: rgba(255,255,255,0.05); border-left: 3px solid #ff4d4d; border-radius: 4px; font-family: monospace; font-size: 13px; color: #fff;";
-                
-                // Display the date, distraction type, and duration
-                item.innerHTML = `
-                    <span style="color: #888;">${log.date}</span> | 
-                    <span style="color: #ff4d4d; font-weight: bold; text-transform: uppercase;">${log.type}</span> | 
-                    <span style="color: #00F5A0;">${log.duration} Min</span>
-                `;
-                historyContainer.appendChild(item);
-            });
-        }
-        
-        console.log(`[METRICS] Today's Total Distractions: ${totalMinutesToday} Min`);
-    } catch (e) {
-        console.error("[METRICS ERROR] Failed to update display UI:", e);
-    }
-}
-

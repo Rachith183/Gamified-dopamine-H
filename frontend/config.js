@@ -19,21 +19,8 @@ const firebaseConfig = {
 const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 window.AOI_API_BASE_URL = isLocalhost ? "http://localhost:3000" : "https://us-central1-intai-a71d8.cloudfunctions.net/api";
 
-// Primary Gemini key (Active valid key)
-window.AOI_GEMINI_API_KEY_PRIMARY = "AIzaSyDazhJe_C2gqOeJ9lPsom7fKxslN7chHBA";
-
-// Secondary fallback key
-window.AOI_GEMINI_API_KEY_SECONDARY = "AIzaSyAXikdv59dOdD1LxfTDqE3meZ_p0HO4qGo";
-
-// Active key (starts with primary, frontend will auto-swap on failure)
-window.AOI_GEMINI_API_KEY = window.AOI_GEMINI_API_KEY_PRIMARY;
-
+// API keys are server-side only (not exposed in frontend)
 window.AOI_GEMINI_MODEL = "gemini-2.5-flash";
-
-// Groq API keys (Direct Client-Side Fallback)
-window.AOI_GROQ_API_KEY_PRIMARY = "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";
-window.AOI_GROQ_API_KEY_SECONDARY = "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";
-window.AOI_GROQ_API_KEY_TERTIARY = "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";
 
 // ============================================================================
 // INITIALIZE FIREBASE

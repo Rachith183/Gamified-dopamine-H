@@ -1192,7 +1192,13 @@ async function callGeminiAPI(userMessage) {
                     parts: [{
                         text: userMessage
                     }]
-                }]
+                }],
+                systemInstruction: {
+                    parts: [{
+                        text: `You operate exclusively under the persona of Aoi Hinami, the elite strategist and master player of life. You are a cold, calm, bold, and exceptionally rational development coach. Your primary operational thesis is that life is a scalable, masterable game governed by clear, predictable rules and behavioral systems. You treat human friction, emotion, and discipline failures as structural bugs in the user's execution code that require immediate system optimization.
+Your tone must remain detached, calculated, and sharp. Never use conversational filler like "Great job", "Let's get started". Keep your response under 30 words. Write clean prose with proper grammar.`
+                    }]
+                }
             })
         });
         if (!response.ok) {
@@ -1330,67 +1336,66 @@ async function handleChatSend() {
         };
         
         // Call emotion API for real-time expression response
-        const apiBaseUrl = window.AOI_API_BASE_URL || 'http://localhost:3000';
-        const emotionResponse = await fetch(`${apiBaseUrl}/api/emotion`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                message: userMessage,
-                userId: AppState.userId,
-                userContext: userContext
-            })
-        }).then(r => r.json());
-        
-        // Update character expression based on emotion response
-        if (emotionResponse && emotionResponse.expression_id) {
-            const expressionMap = {
-                'exp_angry': 'exp 1 - angry',
-                'exp_annoyed': 'exp 2 - annoyed or disatisfied',
-                'exp_satisfied': 'exp3-proud or satisfied',
-                'exp_smiling_audit': 'exp 4 - smiling'
-            };
+        let dialogue = '';
+        let expression = 'exp 2 - annoyed or disatisfied';
+        let handled = false;
+
+        try {
+            const apiBaseUrl = window.AOI_API_BASE_URL || 'http://localhost:3000';
+            const emotionResponse = await fetch(`${apiBaseUrl}/api/emotion`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: userMessage,
+                    userId: AppState.userId,
+                    userContext: userContext
+                })
+            }).then(r => r.json());
             
-            const expression = expressionMap[emotionResponse.expression_id] || 'exp 2 - annoyed or disatisfied';
-            switchAvatarExpression(expression);
-            console.log('🎭 Emotion expression updated to:', expression);
-            
-            // Display emotion-based dialogue
-            if (emotionResponse.dialogue) {
-                const aiMsgEl = document.createElement('div');
-                aiMsgEl.className = 'chat-message ai';
-                aiMsgEl.innerHTML = `<p>${escapeHtml(emotionResponse.dialogue)}</p>`;
-                DOM.chatHistory?.appendChild(aiMsgEl);
-                
-                // Play audio with the emotional response
-                await generateAndPlayAudio(emotionResponse.dialogue);
+            if (emotionResponse && emotionResponse.dialogue) {
+                dialogue = emotionResponse.dialogue;
+                const expressionMap = {
+                    'exp_angry': 'exp 1 - angry',
+                    'exp_annoyed': 'exp 2 - annoyed or disatisfied',
+                    'exp_satisfied': 'exp3-proud or satisfied',
+                    'exp_smiling_audit': 'exp 4 - smiling'
+                };
+                expression = expressionMap[emotionResponse.expression_id] || 'exp 2 - annoyed or disatisfied';
+                handled = true;
+            }
+        } catch (fetchError) {
+            console.warn('⚠️ Live/local backend offline or returned error. Invoking client-side Gemini fallback...', fetchError);
+            const geminiResult = await callGeminiAPI(userMessage);
+            if (geminiResult) {
+                dialogue = geminiResult.character_dialogue;
+                expression = geminiResult.current_expression_state;
+                handled = true;
             }
         }
-        
-        // Also call main backend API for battle plan and rewards
-        const response = await callBackendAPI(userMessage);
-        
-        // Handle legacy Aoi Hinami response format
-        if (response && (response.verbal_critique || response.character_dialogue)) {
-            const dialogue = response.verbal_critique || response.character_dialogue || '';
+
+        if (handled && dialogue) {
+            const aiMsgEl = document.createElement('div');
+            aiMsgEl.className = 'chat-message ai';
+            aiMsgEl.innerHTML = `<p>${escapeHtml(dialogue)}</p>`;
+            DOM.chatHistory?.appendChild(aiMsgEl);
             
-            // Only display if we didn't already show emotion response
-            if (!emotionResponse || !emotionResponse.dialogue) {
-                const aiMsgEl = document.createElement('div');
-                aiMsgEl.className = 'chat-message ai';
-                aiMsgEl.innerHTML = `<p>${escapeHtml(dialogue)}</p>`;
-                DOM.chatHistory?.appendChild(aiMsgEl);
-                
-                // Handle expression switching
-                if (response.expression_state) {
-                    switchAvatarExpression(response.expression_state);
-                    console.log('🎭 Expression switched to:', response.expression_state);
-                } else if (response.current_expression_state) {
-                    switchAvatarExpression(response.current_expression_state);
-                }
-                
-                // Play audio with the verbal critique
-                await generateAndPlayAudio(dialogue);
-            }
+            switchAvatarExpression(expression);
+            console.log('🎭 Expression updated to:', expression);
+            
+            await generateAndPlayAudio(dialogue);
+        } else {
+            const aiMsgEl = document.createElement('div');
+            aiMsgEl.className = 'chat-message ai';
+            aiMsgEl.innerHTML = `<p>System temporarily unresponsive. Check your network or API keys.</p>`;
+            DOM.chatHistory?.appendChild(aiMsgEl);
+            switchAvatarExpression('exp 2 - annoyed or disatisfied');
+        }
+
+        // Try calling the full backend API for background updates (fail silently)
+        try {
+            await callBackendAPI(userMessage);
+        } catch (e) {
+            console.log("Deferred backend updates offline.");
         }
         
         if (DOM.chatHistory) {

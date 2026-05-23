@@ -1,7 +1,7 @@
-console.log("Querying live backend API at https://us-central1-intai-a71d8.cloudfunctions.net/api/emotion...");
+console.log("Querying local backend API at http://localhost:3000/api/emotion...");
 
 try {
-  const response = await fetch("https://us-central1-intai-a71d8.cloudfunctions.net/api/emotion", {
+  const response = await fetch("http://localhost:3000/api/emotion", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -19,10 +19,10 @@ try {
   
   if (response.ok) {
     const data = await response.json();
-    console.log("✅ Live Backend API success! Response:");
+    console.log("✅ Backend API success! Response:");
     console.log(JSON.stringify(data, null, 2));
   } else {
-    console.log(`❌ Live Backend API failed with status ${response.status}:`);
+    console.log(`❌ Backend API failed with status ${response.status}:`);
     const errText = await response.text();
     console.log(errText);
   }

@@ -1,11 +1,12 @@
+import cors from "cors";
 import "dotenv/config";
 import express from "express";
+import { onRequest } from "firebase-functions/v2/https";
 import multer from "multer";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import admin from "firebase-admin";
 import { GoogleGenAI } from "@google/genai";
-import { initializeDatabase, saveMessage, saveUserData, getUserData } from "./database.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -186,49 +187,6 @@ const upload = multer({
   limits: {
     fileSize: 18 * 1024 * 1024
   }
-});
-
-// ============================================================================
-// CORS MUST BE FIRST - Handle ALL CORS requests with explicit headers
-// ============================================================================
-app.use((req, res, next) => {
-  // Set CORS headers on every response
-  res.header('Access-Control-Allow-Origin', 'https://rachith183.github.io');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  
-  // Handle OPTIONS requests immediately
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  
-  next();
-});
-
-// ============================================================================
-// EXPLICIT PREFLIGHT HANDLER - Must run before URL rewriting
-// ============================================================================
-// Handle preflight OPTIONS requests for /api/* routes explicitly
-app.options('/api/*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', 'https://rachith183.github.io');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.sendStatus(200);
-});
-
-// ============================================================================
-// VERCEL URL REWRITING - Strip /api prefix for Vercel serverless routing
-// ============================================================================
-// When deployed on Vercel, /api/* requests route to api/index.js
-// But Express routes are defined without /api prefix (e.g., /emotion not /api/emotion)
-// This middleware strips the /api prefix so routes match correctly
-app.use((req, res, next) => {
-  if (req.url.startsWith('/api/')) {
-    req.url = req.url.replace(/^\/api/, '');
-  }
-  next();
 });
 
 let aiClient;
@@ -909,7 +867,7 @@ const schemaDefinition = {
   required: ["expression_state", "verbal_critique", "assigned_track", "execution_paradigm", "ui_accent_color", "battle_plan", "reward_shop_refresh"]
 };
 
-// Parse and handle JSON body + static file serving
+app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(frontendDirectory));
 app.use("/layers", express.static(layersDirectory));
@@ -1451,7 +1409,7 @@ app.get("/", (request, response) => {
   response.sendFile(path.join(frontendDirectory, "index.html"));
 });
 
-app.post("/sync", async (request, response, next) => {
+app.post("/api/sync", async (request, response, next) => {
   try {
     const { user_id, type, payload } = request.body || {};
 
@@ -1467,7 +1425,7 @@ app.post("/sync", async (request, response, next) => {
   }
 });
 
-app.post("/interact", async (request, response, next) => {
+app.post("/api/interact", async (request, response, next) => {
   try {
     const userId = String(request.body?.user_id || "anonymous_user");
     const telemetry = await collectUserTelemetry(userId);
@@ -1500,7 +1458,7 @@ app.post("/interact", async (request, response, next) => {
   }
 });
 
-app.post("/scan", upload.single("document"), async (request, response, next) => {
+app.post("/api/scan", upload.single("document"), async (request, response, next) => {
   try {
     if (!request.file) {
       response.status(400).json({
@@ -1542,7 +1500,7 @@ app.post("/scan", upload.single("document"), async (request, response, next) => 
   }
 });
 
-app.get("/user-data", async (request, response, next) => {
+app.get("/api/user-data", async (request, response, next) => {
   try {
     const userId = String(request.query?.user_id || "anonymous_user");
     const result = await getUserData(userId);
@@ -1552,7 +1510,7 @@ app.get("/user-data", async (request, response, next) => {
   }
 });
 
-app.get("/stream", async (request, response, next) => {
+app.get("/api/stream", async (request, response, next) => {
   const userId = String(request.query?.user_id || "anonymous_user");
 
   try {
@@ -1599,13 +1557,7 @@ app.get("/stream", async (request, response, next) => {
 // EMOTION-BASED RESPONSE API - Interactive Character Emotions
 // ============================================================================
 
-app.post("/emotion", async (request, response, next) => {
-  // Set CORS headers immediately
-  response.setHeader('Access-Control-Allow-Origin', 'https://rachith183.github.io');
-  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
-  response.setHeader('Access-Control-Allow-Credentials', 'true');
-  
+app.post("/api/emotion", async (request, response, next) => {
   try {
     const { message, userId, userContext } = request.body;
     
@@ -1776,13 +1728,6 @@ Keep dialogue under 20 words. Act as Aoi Hinami - cold, calculated, direct.`;
       userId: userIdSafe
     };
 
-    // Save message to database
-    try {
-      await saveMessage(userIdSafe, message, dialogue, getActiveModel());
-    } catch (dbError) {
-      console.warn('⚠️ Failed to save message to database:', dbError.message);
-    }
-
     response.json(normalizedResponse);
   } catch (error) {
     console.error('❌ Emotion API Error:', error.message);
@@ -1796,7 +1741,7 @@ Keep dialogue under 20 words. Act as Aoi Hinami - cold, calculated, direct.`;
   }
 });
 
-app.get('/battle-mode/daily-setup', async (request, response, next) => {
+app.get('/api/battle-mode/daily-setup', async (request, response, next) => {
   try {
     const systemPrompt = `You are the system core engine for a gamified productivity interface. 
 Generate exactly 3 highly strategic, priority daily tasks (Should-Do tasks) and exactly 1 high-dopamine reward.
@@ -1975,27 +1920,18 @@ app.use((error, request, response, next) => {
 });
 
 const isFirebaseRuntime = Boolean(process.env.FUNCTION_TARGET || process.env.K_SERVICE);
-const isVercelRuntime = Boolean(process.env.VERCEL || process.env.VERCEL_ENV);
 
-if (!isFirebaseRuntime && !isVercelRuntime) {
-  initializeDatabase().then(() => {
-    app.listen(port, () => {
-      console.log(`Interactive Character Build AI is running at http://localhost:${port}`);
-      console.log(`🤖 Starting with model: ${getActiveModel()}`);
-      scheduleUpgradeAttempt(); // Start checking for model upgrades
-    });
-  }).catch(err => {
-    console.error("Failed to initialize database:", err);
-    process.exit(1);
-  });
-} else {
-  // For Vercel/serverless, initialize database on first request
-  initializeDatabase().catch(err => {
-    console.error("Failed to initialize database:", err);
+if (!isFirebaseRuntime) {
+  app.listen(port, () => {
+    console.log(`Interactive Character Build AI is running at http://localhost:${port}`);
+    console.log(`🤖 Starting with model: ${getActiveModel()}`);
+    scheduleUpgradeAttempt(); // Start checking for model upgrades
   });
 }
 
-export default app;
-
-// Export for Vercel
-export default app;
+export const api = onRequest({
+  region: "us-central1",
+  cors: true,
+  timeoutSeconds: 120,
+  memory: "512MiB"
+}, app);

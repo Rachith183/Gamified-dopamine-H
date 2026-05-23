@@ -13,17 +13,17 @@ const firebaseConfig = {
 };
 
 // ============================================================================
-// API ENDPOINT CONFIGURATION - Vercel Backend
+// GEMINI API CONFIGURATION — PRIMARY / SECONDARY FALLBACK
 // ============================================================================
 
 const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-window.AOI_API_BASE_URL = isLocalhost ? "http://localhost:3000" : "https://gamified-dopamine-h.vercel.app";
+window.AOI_API_BASE_URL = isLocalhost ? "http://localhost:3000" : "https://us-central1-intai-a71d8.cloudfunctions.net/api";
 
-// Primary Gemini key (AI Plus tier)
-window.AOI_GEMINI_API_KEY_PRIMARY = "AIzaSyDD48qPt3gRpvfnWxY_6Zo8nW1JIRdL4Y8";
+// Primary Gemini key (Active valid key)
+window.AOI_GEMINI_API_KEY_PRIMARY = "AIzaSyDazhJe_C2gqOeJ9lPsom7fKxslN7chHBA";
 
 // Secondary fallback key
-window.AOI_GEMINI_API_KEY_SECONDARY = "AIzaSyBgqQB51TRk69PxqrvP4tPfQtvaqjEwj34";
+window.AOI_GEMINI_API_KEY_SECONDARY = "AIzaSyAXikdv59dOdD1LxfTDqE3meZ_p0HO4qGo";
 
 // Active key (starts with primary, frontend will auto-swap on failure)
 window.AOI_GEMINI_API_KEY = window.AOI_GEMINI_API_KEY_PRIMARY;

@@ -189,6 +189,19 @@ const upload = multer({
   }
 });
 
+// ============================================================================
+// VERCEL URL REWRITING - Strip /api prefix for Vercel serverless routing
+// ============================================================================
+// When deployed on Vercel, /api/* requests route to api/index.js
+// But Express routes are defined without /api prefix (e.g., /emotion not /api/emotion)
+// This middleware strips the /api prefix so routes match correctly
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api/')) {
+    req.url = req.url.replace(/^\/api/, '');
+  }
+  next();
+});
+
 let aiClient;
 let firestoreClient;
 let firestoreAvailable = null; // null = not checked, true = available, false = not available

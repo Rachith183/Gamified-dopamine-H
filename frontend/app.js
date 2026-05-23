@@ -885,9 +885,10 @@ function updateXPSystemDisplays() {
 }
 
 async function fetchAndGenerateBattlePlan() {
+    const apiBaseUrl = window.AOI_API_BASE_URL || 'http://localhost:3000';
     try {
         console.log('🎯 Fetching AI-generated battle plan...');
-        const response = await fetch('/api/battle-mode/daily-setup');
+        const response = await fetch(`${apiBaseUrl}/api/battle-mode/daily-setup`);
         const data = await response.json();
         
         // Transform AI tasks with proper structure
@@ -1329,7 +1330,8 @@ async function handleChatSend() {
         };
         
         // Call emotion API for real-time expression response
-        const emotionResponse = await fetch('/api/emotion', {
+        const apiBaseUrl = window.AOI_API_BASE_URL || 'http://localhost:3000';
+        const emotionResponse = await fetch(`${apiBaseUrl}/api/emotion`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1586,8 +1588,9 @@ const BattleModeLiveEngine = {
 
     // ASYNC GROQ BRIDGE PARSING PIPELINE
     fetchAiTailoredDirectives: async function() {
+        const apiBaseUrl = window.AOI_API_BASE_URL || 'http://localhost:3000';
         try {
-            const response = await fetch('/api/battle-mode/daily-setup');
+            const response = await fetch(`${apiBaseUrl}/api/battle-mode/daily-setup`);
             if (!response.ok) throw new Error("Server communication fault");
             const data = await response.json();
 

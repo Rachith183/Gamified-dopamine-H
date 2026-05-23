@@ -1409,7 +1409,7 @@ app.get("/", (request, response) => {
   response.sendFile(path.join(frontendDirectory, "index.html"));
 });
 
-app.post("/api/sync", async (request, response, next) => {
+app.post("/sync", async (request, response, next) => {
   try {
     const { user_id, type, payload } = request.body || {};
 
@@ -1425,7 +1425,7 @@ app.post("/api/sync", async (request, response, next) => {
   }
 });
 
-app.post("/api/interact", async (request, response, next) => {
+app.post("/interact", async (request, response, next) => {
   try {
     const userId = String(request.body?.user_id || "anonymous_user");
     const telemetry = await collectUserTelemetry(userId);
@@ -1458,7 +1458,7 @@ app.post("/interact", async (request, response, next) => {
   }
 });
 
-app.post("/api/scan", upload.single("document"), async (request, response, next) => {
+app.post("/scan", upload.single("document"), async (request, response, next) => {
   try {
     if (!request.file) {
       response.status(400).json({
@@ -1500,7 +1500,7 @@ app.post("/scan", upload.single("document"), async (request, response, next) => 
   }
 });
 
-app.get("/api/user-data", async (request, response, next) => {
+app.get("/user-data", async (request, response, next) => {
   try {
     const userId = String(request.query?.user_id || "anonymous_user");
     const result = await getUserData(userId);
@@ -1510,7 +1510,7 @@ app.get("/api/user-data", async (request, response, next) => {
   }
 });
 
-app.get("/api/stream", async (request, response, next) => {
+app.get("/stream", async (request, response, next) => {
   const userId = String(request.query?.user_id || "anonymous_user");
 
   try {
@@ -1557,7 +1557,7 @@ app.get("/api/stream", async (request, response, next) => {
 // EMOTION-BASED RESPONSE API - Interactive Character Emotions
 // ============================================================================
 
-app.post("/api/emotion", async (request, response, next) => {
+app.post("/emotion", async (request, response, next) => {
   try {
     const { message, userId, userContext } = request.body;
     
@@ -1741,7 +1741,7 @@ Keep dialogue under 20 words. Act as Aoi Hinami - cold, calculated, direct.`;
   }
 });
 
-app.get('/api/battle-mode/daily-setup', async (request, response, next) => {
+app.get('/battle-mode/daily-setup', async (request, response, next) => {
   try {
     const systemPrompt = `You are the system core engine for a gamified productivity interface. 
 Generate exactly 3 highly strategic, priority daily tasks (Should-Do tasks) and exactly 1 high-dopamine reward.

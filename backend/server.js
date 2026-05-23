@@ -1600,6 +1600,12 @@ app.get("/stream", async (request, response, next) => {
 // ============================================================================
 
 app.post("/emotion", async (request, response, next) => {
+  // Set CORS headers immediately
+  response.setHeader('Access-Control-Allow-Origin', 'https://rachith183.github.io');
+  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+  response.setHeader('Access-Control-Allow-Credentials', 'true');
+  
   try {
     const { message, userId, userContext } = request.body;
     

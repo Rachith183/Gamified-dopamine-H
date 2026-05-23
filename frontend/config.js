@@ -13,7 +13,7 @@ const firebaseConfig = {
 };
 
 // ============================================================================
-// GEMINI API CONFIGURATION — PRIMARY / SECONDARY FALLBACK
+// API ENDPOINT CONFIGURATION - Vercel Backend
 // ============================================================================
 
 const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";

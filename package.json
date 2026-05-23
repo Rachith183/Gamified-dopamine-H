@@ -1,0 +1,25 @@
+{
+  "name": "interactive-character-build-ai",
+  "version": "1.0.0",
+  "description": "A gamified real-world performance target builder with hierarchical goals, rewards, voice input, and structured Gemini output.",
+  "type": "module",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js",
+    "dev-concurrent": "node run-dev.mjs",
+    "prepare:pages": "node scripts/prepare-pages.mjs"
+  },
+  "dependencies": {
+    "@google/genai": "^1.0.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "firebase-admin": "^11.10.0",
+    "firebase-functions": "^7.2.5",
+    "multer": "^2.1.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

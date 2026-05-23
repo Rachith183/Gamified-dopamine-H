@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Character Build AI</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <!-- TOP HEADER BAR -->
+    <header id="top-header-bar">
+        <button id="sidebar-toggle-btn" class="menu-button">☰</button>
+        <h1 class="app-title">Interactive Character Build AI</h1>
+    </header>
+
+    <!-- COLLAPSIBLE LEFT SIDEBAR -->
+    <aside id="app-sidebar">
+        <nav class="sidebar-nav">
+            <button class="sidebar-nav-item" data-panel="ch-core">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">CH Core</span>
+            </button>
+            <button class="sidebar-nav-item" data-panel="goal-tracker">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Goal Tracker</span>
+            </button>
+            <button class="sidebar-nav-item" data-panel="calendar">
+                <span class="nav-icon">📅</span>
+                <span class="nav-label">Calendar</span>
+            </button>
+            <button class="sidebar-nav-item" data-panel="distraction">
+                <span class="nav-icon">⏰</span>
+                <span class="nav-label">Distraction Tracker</span>
+            </button>
+            <button class="sidebar-nav-item" data-panel="profile">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">User Profile Context</span>
+            </button>
+            <button class="sidebar-nav-item" data-panel="live-plan">
+                <span class="nav-icon">⚔️</span>
+                <span class="nav-label">Battle Plan</span>
+            </button>
+            <button class="sidebar-nav-item" data-panel="rewards">
+                <span class="nav-icon">🏆</span>
+                <span class="nav-label">Reward Shop</span>
+            </button>
+        </nav>
+    </aside>
+
+    <!-- MAIN CONTENT VIEWPORT -->
+    <main id="content-viewport">
+        
+        <!-- PANEL 1: CH CORE VIEW -->
+        <section id="panel-ch-core" class="app-panel">
+            <div class="ch-core-wrapper">
+                <!-- CHARACTER AVATAR STAGE -->
+                <div id="character-display" class="character-display">
+                    <div id="avatar-canvas" class="avatar-canvas character-container">
+                        <img id="avatar-base" src="./layers/base layers/base.png" alt="Character Avatar" class="avatar-layer character-sprite character-retro-look">
+                    </div>
+                </div>
+                
+                <!-- CHAT INTERFACE -->
+                <div class="chat-interface">
+                    <div id="chat-history" class="chat-history">
+                        <div class="chat-message system">
+                            <p>Welcome to Interactive Character Build AI. I'm here to help you build your performance targets.</p>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input 
+                            type="text" 
+                            id="chat-input" 
+                            class="chat-input" 
+                            placeholder="Type your message..." 
+                            autocomplete="off"
+                        >
+                        <button id="chat-send-btn" class="chat-send-btn">➔</button>
+                        <button id="chat-mic-btn" class="chat-mic-btn">🎙️</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANEL 2: GOAL TRACKER VIEW -->
+        <section id="panel-goal-tracker" class="app-panel hidden">
+            <div class="goals-wrapper">
+                <h2>Goal Tracking Dashboard</h2>
+                <div class="circular-goal-tracker" style="display: flex; justify-content: space-around; align-items: center; padding: 20px; background: #fff; border-bottom: 1px solid #000; font-family: monospace;">
+                    
+                    <div class="circle-metric-wrapper" style="position: relative; width: 120px; height: 120px; text-align: center;">
+                        <svg width="120" height="120" viewBox="0 0 120 120" style="transform: rotate(-90deg);">
+                            <circle cx="60" cy="60" r="50" stroke="#e0e0e0" stroke-width="10" fill="transparent" />
+                            <circle id="circle-daily-offset" cx="60" cy="60" r="50" stroke="#000000" stroke-width="10" fill="transparent" 
+                                    stroke-dasharray="314.16" stroke-dashoffset="314.16" style="transition: stroke-dashoffset 0.3s ease;" />
+                        </svg>
+                        <div class="circle-label-inner" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column;">
+                            <span id="text-daily-xp" style="font-size: 14px; font-weight: bold;">0</span>
+                            <span style="font-size: 8px; color: #666; text-transform: uppercase;">Daily</span>
+                        </div>
+                    </div>
+
+                    <div class="circle-metric-wrapper" style="position: relative; width: 120px; height: 120px; text-align: center;">
+                        <svg width="120" height="120" viewBox="0 0 120 120" style="transform: rotate(-90deg);">
+                            <circle cx="60" cy="60" r="50" stroke="#e0e0e0" stroke-width="10" fill="transparent" />
+                            <circle id="circle-midterm-offset" cx="60" cy="60" r="50" stroke="#000000" stroke-width="10" fill="transparent" 
+                                    stroke-dasharray="314.16" stroke-dashoffset="314.16" style="transition: stroke-dashoffset 0.3s ease;" />
+                        </svg>
+                        <div class="circle-label-inner" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column;">
+                            <span id="text-midterm-xp" style="font-size: 12px; font-weight: bold;">0</span>
+                            <span style="font-size: 8px; color: #666; text-transform: uppercase;">Midterm</span>
+                        </div>
+                    </div>
+
+                    <div class="circle-metric-wrapper" style="position: relative; width: 120px; height: 120px; text-align: center;">
+                        <svg width="120" height="120" viewBox="0 0 120 120" style="transform: rotate(-90deg);">
+                            <circle cx="60" cy="60" r="50" stroke="#e0e0e0" stroke-width="10" fill="transparent" />
+                            <circle id="circle-longterm-offset" cx="60" cy="60" r="50" stroke="#000000" stroke-width="10" fill="transparent" 
+                                    stroke-dasharray="314.16" stroke-dashoffset="314.16" style="transition: stroke-dashoffset 0.3s ease;" />
+                        </svg>
+                        <div class="circle-label-inner" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column;">
+                            <span id="text-longterm-xp" style="font-size: 11px; font-weight: bold;">0</span>
+                            <span style="font-size: 8px; color: #666; text-transform: uppercase;">Campaign</span>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="performance-log">
+                    <h3>Performance Log</h3>
+                    <table id="performance-table" class="performance-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Tasks Completed</th>
+                                <th>Check-in Hours</th>
+                                <th>Rewards Claimed</th>
+                            </tr>
+                        </thead>
+                        <tbody id="performance-tbody">
+                            <!-- Populated by app.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANEL 3: CALENDAR VIEW -->
+        <section id="panel-calendar" class="app-panel hidden">
+            <div class="calendar-wrapper">
+                <div class="calendar-controls">
+                    <button id="prev-month-btn" class="month-nav-btn">◀ Previous</button>
+                    <h2 id="calendar-month-year" class="calendar-title">May 2026</h2>
+                    <button id="next-month-btn" class="month-nav-btn">Next ▶</button>
+                </div>
+                <div id="calendar-grid" class="calendar-grid">
+                    <!-- Populated by app.js -->
+                </div>
+            </div>
+        </section>
+
+        <!-- PANEL 4: DISTRACTION TRACKER VIEW -->
+        <section id="panel-distraction" class="app-panel hidden">
+            <div class="distraction-wrapper">
+                <h2>Distraction Tracker</h2>
+                <form id="distraction-form" class="distraction-form">
+                    <div class="form-group">
+                        <label for="select-distraction-type">Type of Distraction:</label>
+                        <select id="select-distraction-type" required>
+                            <option value="">-- Select --</option>
+                            <option value="social">Social Media</option>
+                            <option value="browsing">Web Browsing</option>
+                            <option value="gaming">Gaming</option>
+                            <option value="messaging">Messaging</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-distraction-date">Date:</label>
+                        <input type="date" id="input-distraction-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="distraction-time">Time:</label>
+                        <input type="time" id="distraction-time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-distraction-duration">Duration (minutes):</label>
+                        <input type="number" id="input-distraction-duration" min="1" required>
+                    </div>
+                    <button type="submit" id="btn-log-distraction" class="submit-btn">Log Distraction</button>
+                </form>
+                <div class="distraction-metrics">
+                    <div class="metric-card">
+                        <h3>Today's Distractions</h3>
+                        <p class="metric-value" id="today-distractions-count">0 Min</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Weekly Distractions</h3>
+                        <p class="metric-value" id="weekly-distraction-count">0</p>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Monthly Distractions</h3>
+                        <p class="metric-value" id="monthly-distraction-count">0</p>
+                    </div>
+                </div>
+                <div id="distraction-log" class="distraction-log">
+                    <h3>Recent Logs</h3>
+                    <div id="distraction-history-list" class="distraction-entries">
+                        <!-- Populated by app.js -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANEL 5: USER PROFILE CONTEXT VIEW -->
+        <section id="panel-profile" class="app-panel hidden">
+            <div class="profile-wrapper">
+                <h2>User Profile Context</h2>
+                <form id="profile-form" class="profile-form">
+                    <div class="form-section">
+                        <label for="input-academic-details">Academic Details:</label>
+                        <textarea 
+                            id="input-academic-details" 
+                            class="profile-textarea" 
+                            placeholder="Course, semester, subject focus areas..."
+                            rows="4"
+                        ></textarea>
+                    </div>
+                    <div class="form-section">
+                        <label for="input-routine-constraints">Routine Constraints:</label>
+                        <textarea 
+                            id="input-routine-constraints" 
+                            class="profile-textarea" 
+                            placeholder="Exam strategies, free hours, fixed duties..."
+                            rows="4"
+                        ></textarea>
+                    </div>
+                    <div class="form-section">
+                        <label for="input-physical-metrics">Physical Metrics:</label>
+                        <textarea 
+                            id="input-physical-metrics" 
+                            class="profile-textarea" 
+                            placeholder="Calisthenics goals, fitness targets..."
+                            rows="4"
+                        ></textarea>
+                    </div>
+                    <div class="form-section">
+                        <label for="input-skincare-diet">Skincare & Diet Regimens:</label>
+                        <textarea 
+                            id="input-skincare-diet" 
+                            class="profile-textarea" 
+                            placeholder="Diet plans, skincare routine, health goals..."
+                            rows="4"
+                        ></textarea>
+                    </div>
+                    <button type="submit" id="btn-save-profile" class="submit-btn">Save to Cloud</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- PANEL 6: LIVE BATTLE PLAN VIEW -->
+        <section id="panel-live-plan" class="app-panel hidden">
+            <div class="battle-plan-wrapper">
+                <h2>Dynamic Battle Plan</h2>
+                
+                <div id="live-xp-counter-top" style="font-family: monospace; font-size: 14px; color: #00F5A0; margin-bottom: 20px; text-align: center; border: 1px solid #00F5A0; padding: 10px; background: rgba(0, 245, 160, 0.05);">
+                    BATTLE MODE ACTIVE // CURRENT DAILY XP: 0 / 300
+                </div>
+
+                <div id="battle-task-list">
+                    <!-- Populated by BattleModeLiveEngine -->
+                </div>
+
+                <div style="margin-top: 30px; margin-bottom: 30px;">
+                    <h3 style="font-family: monospace; color: #00F5A0; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">7-Day Historical Performance Streak</h3>
+                    <div id="live-calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
+                        <!-- Populated by BattleModeLiveEngine -->
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 245, 160, 0.3); border-radius: 8px; text-align: center; font-family: monospace;">
+                    <strong style="color: var(--color-light-gray);">Exclusive Daily Reward:</strong>
+                    <div id="ai-exclusive-reward-text" style="font-size: 14px; color: #00F5A0; margin-top: 8px; font-weight: bold;">Loading AI reward...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANEL 7: REWARD SHOP VIEW -->
+        <section id="panel-rewards" class="app-panel hidden">
+            <div class="rewards-wrapper">
+                <h2>Reward Shop Dashboard</h2>
+                
+                <div id="reward-shop-list">
+                    <!-- Populated by BattleModeLiveEngine -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- SCRIPTS -->
+    <!-- Firebase SDK (compat mode for CDN use) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

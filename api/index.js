@@ -1,7 +1,7 @@
 // Vercel serverless function - imports and exports the Express app with CORS headers
 import app from '../backend/server.js';
 
-// Set CORS headers for all responses
+// Handle CORS preflight requests
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', 'https://rachith183.github.io');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -12,6 +12,12 @@ app.use((req, res, next) => {
     res.status(200).end();
     return;
   }
+  
+  // Strip /api prefix from route path for Express routing
+  if (req.path.startsWith('/api/')) {
+    req.url = req.url.replace(/^\/api/, '');
+  }
+  
   next();
 });
 

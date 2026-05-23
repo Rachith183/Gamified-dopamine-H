@@ -207,6 +207,18 @@ app.use((req, res, next) => {
 });
 
 // ============================================================================
+// EXPLICIT PREFLIGHT HANDLER - Must run before URL rewriting
+// ============================================================================
+// Handle preflight OPTIONS requests for /api/* routes explicitly
+app.options('/api/*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', 'https://rachith183.github.io');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
+
+// ============================================================================
 // VERCEL URL REWRITING - Strip /api prefix for Vercel serverless routing
 // ============================================================================
 // When deployed on Vercel, /api/* requests route to api/index.js

@@ -1,18 +1,8 @@
 {
   "buildCommand": "npm install",
-  "outputDirectory": "./",
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/frontend/$1"
-    }
-  ],
   "functions": {
     "api/index.js": {
+      "runtime": "nodejs18.x",
       "memory": 512,
       "maxDuration": 60
     }

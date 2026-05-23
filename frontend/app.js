@@ -430,7 +430,7 @@ function createOrUpdateLayerElement(id, src, className) {
         element = document.createElement('img');
         element.id = id;
         element.src = src;
-        element.className = className + ' character-retro-look';
+        element.className = className;
         element.style.position = 'absolute';
         element.style.top = '0';
         element.style.left = '0';
@@ -808,7 +808,7 @@ function initAnimationEngine() {
     if (!avatarBase) {
         avatarBase = document.createElement('img');
         avatarBase.id = 'avatar-base';
-        avatarBase.className = 'avatar-layer character-sprite character-retro-look';
+        avatarBase.className = 'avatar-layer character-sprite';
         avatarBase.src = './layers/base layers/base.png';
         avatarBase.alt = 'Character Base';
         avatarBase.style.maxWidth = '100%';

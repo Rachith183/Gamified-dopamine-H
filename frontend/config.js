@@ -17,7 +17,7 @@ const firebaseConfig = {
 // ============================================================================
 
 const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-window.AOI_API_BASE_URL = isLocalhost ? "http://localhost:3000" : "https://us-central1-intai-a71d8.cloudfunctions.net/api";
+window.AOI_API_BASE_URL = isLocalhost ? "http://localhost:3000" : "https://us-central1-intai-a71d8.cloudfunctions.net";
 
 // Primary Gemini key (AI Plus tier)
 window.AOI_GEMINI_API_KEY_PRIMARY = "AIzaSyDD48qPt3gRpvfnWxY_6Zo8nW1JIRdL4Y8";

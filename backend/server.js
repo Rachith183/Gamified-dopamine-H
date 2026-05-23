@@ -202,6 +202,15 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Manual preflight handler - explicitly respond to OPTIONS with CORS headers
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', 'https://rachith183.github.io');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
+
 // ============================================================================
 // VERCEL URL REWRITING - Strip /api prefix for Vercel serverless routing
 // ============================================================================

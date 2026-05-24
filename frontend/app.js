@@ -13,9 +13,13 @@ const MONTH_NAMES = [
 ];
 
 const EXPRESSION_MAP = {
+    'exp 1': 'exp 1 - angry',
     'exp 1 - angry': 'exp 1 - angry',
+    'exp 2': 'exp 2 - annoyed or disatisfied',
     'exp 2 - annoyed or disatisfied': 'exp 2 - annoyed or disatisfied',
+    'exp 3': 'exp3-proud or satisfied',
     'exp3-proud or satisfied': 'exp3-proud or satisfied',
+    'exp 4': 'exp 4 - smiling',
     'exp 4 - smiling': 'exp 4 - smiling'
 };
 

@@ -24,7 +24,14 @@ const EXPRESSION_ASSETS = {
     'exp 1 - angry': {
         mouth: './layers expression/exp 1 - angry/angry mouth.png',
         eyesLeft: './layers expression/exp 1 - angry/angry left eye.png',
-        eyesRight: './layers expression/exp 1 - angry/angry right eye.png'
+        eyesRight: './layers expression/exp 1 - angry/angry right eye.png',
+        // Blink animation eyes for angry
+        eyesLeftOpen: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full opened eye/left full opened eye.png',
+        eyesLeftClosed: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full closed eye/left eye closed.png',
+        eyesLeftHalf: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/half closed eye/halfclosed eye left.png',
+        eyesRightOpen: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full opened eye/right full opened eye.png',
+        eyesRightClosed: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full closed eye/right eye closed.png',
+        eyesRightHalf: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/half closed eye/halfclosed eye right.png'
     },
     'exp 2 - annoyed or disatisfied': {
         mouth: './layers expression/exp 2 - annoyed or disatisfied/mouth annoyed.png',
@@ -45,7 +52,7 @@ const EXPRESSION_ASSETS = {
 
 // Base character and animation layers
 const ASSET_PATHS = {
-    base: './layers expression/base layers/base.png',
+    base: './layers expression/base layers/faceless.png',
     mouth: {
         closed: './layers expression/mouth(use for speaking animation and expression and generation)/closed mouth.png',
         half: './layers expression/mouth(use for speaking animation and expression and generation)/half opened mouth.png',
@@ -380,6 +387,38 @@ function switchAvatarExpression(expressionState) {
             const eyeRightImg = new Image();
             eyeRightImg.src = assets.eyesRight;
             console.log('📂 Right eye asset:', assets.eyesRight);
+        }
+        
+        // Preload blink animation eyes if they exist
+        if (assets.eyesLeftOpen) {
+            const img = new Image();
+            img.src = assets.eyesLeftOpen;
+            console.log('📂 Blink animation - Left Open:', assets.eyesLeftOpen);
+        }
+        if (assets.eyesLeftClosed) {
+            const img = new Image();
+            img.src = assets.eyesLeftClosed;
+            console.log('📂 Blink animation - Left Closed:', assets.eyesLeftClosed);
+        }
+        if (assets.eyesLeftHalf) {
+            const img = new Image();
+            img.src = assets.eyesLeftHalf;
+            console.log('📂 Blink animation - Left Half:', assets.eyesLeftHalf);
+        }
+        if (assets.eyesRightOpen) {
+            const img = new Image();
+            img.src = assets.eyesRightOpen;
+            console.log('📂 Blink animation - Right Open:', assets.eyesRightOpen);
+        }
+        if (assets.eyesRightClosed) {
+            const img = new Image();
+            img.src = assets.eyesRightClosed;
+            console.log('📂 Blink animation - Right Closed:', assets.eyesRightClosed);
+        }
+        if (assets.eyesRightHalf) {
+            const img = new Image();
+            img.src = assets.eyesRightHalf;
+            console.log('📂 Blink animation - Right Half:', assets.eyesRightHalf);
         }
     } else {
         console.log('ℹ️ Using generic blinking animation for expression:', expression);
@@ -843,7 +882,7 @@ function initAnimationEngine() {
         avatarBase = document.createElement('img');
         avatarBase.id = 'avatar-base';
         avatarBase.className = 'avatar-layer';
-        avatarBase.src = './layers expression/base layers/base.png';
+        avatarBase.src = './layers expression/base layers/faceless.png';
         avatarBase.alt = 'Character Base';
         avatarBase.style.maxWidth = '100%';
         avatarBase.style.maxHeight = '100%';
@@ -1524,7 +1563,7 @@ function initProfileForm() {
 
 function initializeApp() {
     console.log('🚀 Initializing Interactive Character Build AI');
-    console.log('✅ Base character: ./layers expression/base layers/base.png');
+    console.log('✅ Base character: ./layers expression/base layers/faceless.png');
     console.log('✅ Animation assets loaded from ./layers expression/');
     console.log('✅ Backend API ready at:', window.AOI_API_BASE_URL || 'http://localhost:3000');
     

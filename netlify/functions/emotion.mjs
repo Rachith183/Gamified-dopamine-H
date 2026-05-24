@@ -54,27 +54,27 @@ const callGroq = async (prompt) => {
   throw new Error("All Groq keys exhausted");
 };
 
-// Keyword-based emotion detection
+// Keyword-based emotion detection - with comprehensive keyword coverage
 const detectEmotionByKeywords = (message) => {
   const msgLower = message.toLowerCase();
 
-  // exp_angry: depressed, down, sad, anxious, overwhelmed, hopeless
-  if (/depressed|down|sad|worthless|hopeless|crying|suicidal|anxious|overwhelmed|stressed/i.test(msgLower)) {
+  // exp_angry: user is down, depressed, sad, emotional, whining, anxious, overwhelmed
+  if (/depressed|down|sad|worthless|hopeless|crying|suicidal|anxious|overwhelmed|stressed|miserable|terrible|awful|hate|devastated|broken|dying|bleeding|painful|hurting|struggling|suffering/i.test(msgLower)) {
     return { expression_id: "exp_angry", dialogue: "Your instability is showing." };
   }
 
-  // exp_smiling: happy, excited, enthusiastic, optimistic, great
-  if (/excited|happy|enthusiastic|stoked|great|amazing|awesome|love it|incredible|fantastic|best/i.test(msgLower)) {
+  // exp_smiling: user is enthusiastic, happy, optimistic, excited
+  if (/excited|happy|enthusiastic|stoked|great|amazing|awesome|love it|incredible|fantastic|best|optimistic|thrilled|pumped|hyped|blessed|grateful|thankful|grateful|proud/i.test(msgLower)) {
     return { expression_id: "exp_smiling", dialogue: "You're trending upward." };
   }
 
-  // exp_satisfied: completed, finished, done, accomplished, exercised, studied
-  if (/completed|finished|done|accomplished|achieved|passed|succeeded|nailed|workout|exercise|studied|learned/i.test(msgLower)) {
+  // exp_satisfied: user completed task, planning academics, workout, finishing important task
+  if (/completed|finishing|finished|done|accomplished|achieved|passed|succeeded|nailed|workout|exercise|studied|learned|finished|delivered|executed|submitted|implemented|built|created/i.test(msgLower)) {
     return { expression_id: "exp_satisfied", dialogue: "Progress logged." };
   }
 
-  // exp_annoyed: procrastinating, lazy, wasting time, junk, excuse, failed
-  if (/procrastinat|wasting time|lazy|junk|eating|skipped|failed|gave up|excuse|quit|wasted|distracted|overthinking/i.test(msgLower)) {
+  // exp_annoyed: user wasting time, eating junk, not completing task, excuses, procrastinating, complaining
+  if (/procrastinat|wasting time|lazy|junk food|eating|skipped|failed|gave up|excuse|quit|wasted|distracted|overthinking|complain|annoyed|frustrated|irritated|bothered|fed up|scrolling|social media|netflix|gaming/i.test(msgLower)) {
     return { expression_id: "exp_annoyed", dialogue: "Predictable inefficiency." };
   }
 
@@ -107,14 +107,20 @@ export const handler = async (event) => {
       };
     }
 
-    const emotionPrompt = `Respond with ONLY valid JSON:
-{"expression_id":"exp_angry","dialogue":"response"}
+    const emotionPrompt = `You are Aoi Hinami - cold, direct, and perceptive. Analyze the user's message and respond with ONLY valid JSON.
 
-User: "${message}"
-Progress: ${dailyProgress}%, Distractions: ${distractionsCount}, Stability: ${(stability * 100).toFixed(0)}%
+Respond with: {"expression_id":"EMOTION","dialogue":"response"}
 
-Pick ONE: exp_angry | exp_smiling | exp_satisfied | exp_annoyed
-Keep dialogue under 15 words. Be Aoi Hinami - cold, direct.`;
+EMOTION DETECTION GUIDE:
+- exp_angry: User is down, depressed, sad, emotional, whining, overwhelmed, anxious, or struggling
+- exp_smiling: User is enthusiastic, happy, optimistic, excited, or pumped
+- exp_satisfied: User completed/finished a task, exercise, academics, or important goal
+- exp_annoyed: User is procrastinating, wasting time, making excuses, eating junk, or complaining
+
+User message: "${message}"
+Daily progress: ${dailyProgress}%, Distractions: ${distractionsCount}, Stability: ${(stability * 100).toFixed(0)}%
+
+CRITICAL: Pick ONLY ONE emotion. Response under 15 words. Be cold and direct like Aoi Hinami.`;
 
     let emotionText = "";
     let usedGemini = false;
@@ -141,9 +147,14 @@ Keep dialogue under 15 words. Be Aoi Hinami - cold, direct.`;
     let emotionData = { expression_id: "exp_annoyed", dialogue: "Processing..." };
     try {
       emotionData = JSON.parse(emotionText);
+      // Validate expression_id
+      const validExpressions = ['exp_angry', 'exp_smiling', 'exp_satisfied', 'exp_annoyed'];
+      if (!validExpressions.includes(emotionData.expression_id)) {
+        console.warn("Invalid expression_id returned:", emotionData.expression_id);
+        emotionData.expression_id = 'exp_annoyed';
+      }
     } catch (parseErr) {
       console.warn("Parse error:", parseErr.message, "Raw response:", emotionText);
-      // Return what we got even if malformed
       emotionData = { expression_id: "exp_annoyed", dialogue: "Response received." };
     }
 

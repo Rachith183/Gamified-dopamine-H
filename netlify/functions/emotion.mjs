@@ -15,6 +15,28 @@ const callGemini = async (prompt) => {
   return response.candidates?.[0]?.content?.parts?.[0]?.text || "";
 };
 
+const parseEmotionJson = (text) => {
+  const jsonMatch = String(text || "").match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("No JSON object in emotion response");
+  const emotionData = JSON.parse(jsonMatch[0]);
+  if (!emotionData.expression_id || !emotionData.dialogue) {
+    throw new Error("Emotion response missing expression_id or dialogue");
+  }
+  return emotionData;
+};
+
+const normalizeEmotionExpressionId = (expressionId) => {
+  const expressionAliases = {
+    exp_angry: "exp_angry",
+    exp_smiling: "exp_smiling",
+    exp_smiling_audit: "exp_smiling",
+    exp_satisfied: "exp_satisfied",
+    exp_annoyed: "exp_annoyed"
+  };
+
+  return expressionAliases[String(expressionId || "").trim()] || "exp_annoyed";
+};
+
 const callGroq = async (prompt) => {
   const groqKeys = [
     process.env.GROQ_API_KEY,
@@ -35,7 +57,9 @@ const callGroq = async (prompt) => {
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           messages: [{ role: "user", content: prompt }],
-          max_tokens: 150
+          temperature: 0.5,
+          max_tokens: 150,
+          response_format: { type: "json_object" }
         })
       });
 
@@ -59,22 +83,22 @@ const detectEmotionByKeywords = (message) => {
   const msgLower = message.toLowerCase();
 
   // exp_angry: user is down, depressed, sad, emotional, whining, anxious, overwhelmed
-  if (/depressed|down|sad|worthless|hopeless|crying|suicidal|anxious|overwhelmed|stressed|miserable|terrible|awful|hate|devastated|broken|dying|bleeding|painful|hurting|struggling|suffering/i.test(msgLower)) {
+  if (/depress|down|sad|worthless|hopeless|cry|tears|lonely|alone|anxious|anxiety|panic|scared|afraid|worried|overwhelmed|stress|burnt out|burnout|exhausted|tired|miserable|terrible|awful|hate myself|devastated|broken|dying|painful|hurting|struggl|suffer|lost|empty|numb|demotivat|can't do this|cant do this/i.test(msgLower)) {
     return { expression_id: "exp_angry", dialogue: "Your instability is showing." };
   }
 
   // exp_smiling: user is enthusiastic, happy, optimistic, excited
-  if (/excited|happy|enthusiastic|stoked|great|amazing|awesome|love it|incredible|fantastic|best|optimistic|thrilled|pumped|hyped|blessed|grateful|thankful|grateful|proud/i.test(msgLower)) {
+  if (/excited|happy|joy|glad|enthusiastic|stoked|great|amazing|awesome|love it|love this|incredible|fantastic|best|optimistic|thrilled|pumped|hyped|blessed|grateful|thankful|proud|confident|motivated|lets go|let's go|yay|nice|cool|excellent|perfect|win|winning/i.test(msgLower)) {
     return { expression_id: "exp_smiling", dialogue: "You're trending upward." };
   }
 
   // exp_satisfied: user completed task, planning academics, workout, finishing important task
-  if (/completed|finishing|finished|done|accomplished|achieved|passed|succeeded|nailed|workout|exercise|studied|learned|finished|delivered|executed|submitted|implemented|built|created/i.test(msgLower)) {
+  if (/completed|complete|finishing|finished|done|accomplished|achieved|passed|succeeded|nailed|workout|exercise|gym|trained|training|pushup|pullup|squat|run|ran|studied|study|revised|revision|learned|practiced|delivered|executed|submitted|implemented|built|created|shipped|solved|fixed|cleaned|organized|productive|consistent|streak/i.test(msgLower)) {
     return { expression_id: "exp_satisfied", dialogue: "Progress logged." };
   }
 
   // exp_annoyed: user wasting time, eating junk, not completing task, excuses, procrastinating, complaining
-  if (/procrastinat|wasting time|lazy|junk food|eating|skipped|failed|gave up|excuse|quit|wasted|distracted|overthinking|complain|annoyed|frustrated|irritated|bothered|fed up|scrolling|social media|netflix|gaming/i.test(msgLower)) {
+  if (/procrastinat|wasting time|waste time|lazy|junk food|junk|overeating|ate too much|skipped|failed|gave up|excuse|quit|wasted|distracted|distraction|can't focus|cant focus|unfocused|overthinking|complain|annoyed|angry|mad|pissed|frustrated|irritated|bothered|fed up|bored|stuck|delay|later|scrolling|doomscroll|reels|shorts|instagram|youtube|social media|netflix|gaming|game all day/i.test(msgLower)) {
     return { expression_id: "exp_annoyed", dialogue: "Predictable inefficiency." };
   }
 
@@ -97,16 +121,6 @@ export const handler = async (event) => {
     const distractionsCount = userContext?.distractionsCount || 0;
     const stability = userContext?.stability || 0.5;
 
-    // Try keyword detection first (instant, no API call)
-    const keywordMatch = detectEmotionByKeywords(message);
-    if (keywordMatch) {
-      return {
-        statusCode: 200,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(keywordMatch)
-      };
-    }
-
     const emotionPrompt = `You are Aoi Hinami - cold, direct, and perceptive. Analyze the user's message and respond with ONLY valid JSON.
 
 Respond with: {"expression_id":"EMOTION","dialogue":"response"}
@@ -122,46 +136,34 @@ Daily progress: ${dailyProgress}%, Distractions: ${distractionsCount}, Stability
 
 CRITICAL: Pick ONLY ONE emotion. Response under 15 words. Be cold and direct like Aoi Hinami.`;
 
-    let emotionText = "";
-    let usedGemini = false;
+    let emotionData = null;
+    let source = "groq";
 
-    // Try Groq first
+    // Try Groq first, then Gemini, then keyword fallback.
     try {
-      emotionText = await callGroq(emotionPrompt);
+      emotionData = parseEmotionJson(await callGroq(emotionPrompt));
     } catch (groqErr) {
       console.log("Groq failed:", groqErr.message);
-      // Fall back to Gemini
       try {
-        emotionText = await callGemini(emotionPrompt);
-        usedGemini = true;
+        emotionData = parseEmotionJson(await callGemini(emotionPrompt));
+        source = "gemini";
       } catch (geminiErr) {
         console.error("Gemini also failed:", geminiErr.message);
-        return {
-          statusCode: 200,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ expression_id: "exp_annoyed", dialogue: "APIs temporarily unavailable." })
-        };
+        source = "keyword";
       }
     }
 
-    let emotionData = { expression_id: "exp_annoyed", dialogue: "Processing..." };
-    try {
-      emotionData = JSON.parse(emotionText);
-      // Validate expression_id
-      const validExpressions = ['exp_angry', 'exp_smiling', 'exp_satisfied', 'exp_annoyed'];
-      if (!validExpressions.includes(emotionData.expression_id)) {
-        console.warn("Invalid expression_id returned:", emotionData.expression_id);
-        emotionData.expression_id = 'exp_annoyed';
-      }
-    } catch (parseErr) {
-      console.warn("Parse error:", parseErr.message, "Raw response:", emotionText);
-      emotionData = { expression_id: "exp_annoyed", dialogue: "Response received." };
+    if (!emotionData) {
+      emotionData = detectEmotionByKeywords(message) || { expression_id: "exp_annoyed", dialogue: "Response received." };
+      source = "keyword";
     }
+
+    emotionData.expression_id = normalizeEmotionExpressionId(emotionData.expression_id);
 
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(emotionData)
+      body: JSON.stringify({ ...emotionData, source })
     };
   } catch (error) {
     console.error("Emotion endpoint error:", error);

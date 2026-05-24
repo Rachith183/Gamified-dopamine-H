@@ -1557,6 +1557,40 @@ app.get("/api/stream", async (request, response, next) => {
 // EMOTION-BASED RESPONSE API - Interactive Character Emotions
 // ============================================================================
 
+function detectEmotionByKeywords(message) {
+  const msgLower = String(message || "").toLowerCase();
+
+  if (/depress|down|sad|worthless|hopeless|cry|tears|lonely|alone|anxious|anxiety|panic|scared|afraid|worried|overwhelmed|stress|burnt out|burnout|exhausted|tired|miserable|terrible|awful|hate myself|devastated|broken|dying|painful|hurting|struggl|suffer|lost|empty|numb|demotivat|can't do this|cant do this/i.test(msgLower)) {
+    return { expression_id: "exp_angry", dialogue: "Your instability is showing." };
+  }
+
+  if (/excited|happy|joy|glad|enthusiastic|stoked|great|amazing|awesome|love it|love this|incredible|fantastic|best|optimistic|thrilled|pumped|hyped|blessed|grateful|thankful|proud|confident|motivated|lets go|let's go|yay|nice|cool|excellent|perfect|win|winning/i.test(msgLower)) {
+    return { expression_id: "exp_smiling", dialogue: "You're trending upward." };
+  }
+
+  if (/completed|complete|finishing|finished|done|accomplished|achieved|passed|succeeded|nailed|workout|exercise|gym|trained|training|pushup|pullup|squat|run|ran|studied|study|revised|revision|learned|practiced|delivered|executed|submitted|implemented|built|created|shipped|solved|fixed|cleaned|organized|productive|consistent|streak/i.test(msgLower)) {
+    return { expression_id: "exp_satisfied", dialogue: "Progress logged." };
+  }
+
+  if (/procrastinat|wasting time|waste time|lazy|junk food|junk|overeating|ate too much|skipped|failed|gave up|excuse|quit|wasted|distracted|distraction|can't focus|cant focus|unfocused|overthinking|complain|annoyed|angry|mad|pissed|frustrated|irritated|bothered|fed up|bored|stuck|delay|later|scrolling|doomscroll|reels|shorts|instagram|youtube|social media|netflix|gaming|game all day/i.test(msgLower)) {
+    return { expression_id: "exp_annoyed", dialogue: "Predictable inefficiency." };
+  }
+
+  return null;
+}
+
+function normalizeEmotionExpressionId(expressionId) {
+  const expressionMap = {
+    exp_angry: "exp_angry",
+    exp_annoyed: "exp_annoyed",
+    exp_satisfied: "exp_satisfied",
+    exp_smiling: "exp_smiling",
+    exp_smiling_audit: "exp_smiling"
+  };
+
+  return expressionMap[String(expressionId || "").trim()] || "exp_annoyed";
+}
+
 app.post("/api/emotion", async (request, response, next) => {
   try {
     const { message, userId, userContext } = request.body;
@@ -1587,7 +1621,7 @@ app.post("/api/emotion", async (request, response, next) => {
       expressionId = 'exp_satisfied';
       dialogue = 'Systemic alignment detected. Continue this trajectory.';
     } else if (distractionsCount >= 3 && dailyProgress < 40) {
-      expressionId = 'exp_smiling_audit';
+      expressionId = 'exp_smiling';
       dialogue = 'Your self-sabotage is predictable. Optimize the base layer.';
     }
     
@@ -1599,7 +1633,7 @@ Daily Progress: ${dailyProgress}%
 Distractions: ${distractionsCount}
 Stability: ${(stability * 100).toFixed(0)}%
 
-Choose expression: exp_angry (unstable), exp_annoyed (inefficient), exp_satisfied (optimal), or exp_smiling_audit (self-sabotaging).
+Choose expression: exp_angry (unstable), exp_annoyed (inefficient), exp_satisfied (optimal), or exp_smiling (self-sabotaging or amused).
 Keep dialogue under 20 words. Act as Aoi Hinami - cold, calculated, direct.`;
 
     const groqKeys = [
@@ -1609,6 +1643,7 @@ Keep dialogue under 20 words. Act as Aoi Hinami - cold, calculated, direct.`;
     ].filter(Boolean);
 
     let emotionSuccess = false;
+    let emotionSource = 'keyword';
 
     // Try Groq API first with triple-key and model rotation
     if (groqKeys.length > 0) {
@@ -1647,9 +1682,10 @@ Keep dialogue under 20 words. Act as Aoi Hinami - cold, calculated, direct.`;
                   const parsed = JSON.parse(jsonMatch[0]);
                   if (parsed.expression_id && parsed.dialogue) {
                     console.log(`✅ Groq API success with ${groqModel} (${keyLabel} key)`);
-                    expressionId = parsed.expression_id;
+                    expressionId = normalizeEmotionExpressionId(parsed.expression_id);
                     dialogue = parsed.dialogue;
                     emotionSuccess = true;
+                    emotionSource = 'groq';
                     break; // Success! Exit model loop
                   }
                 } catch (parseError) {
@@ -1669,7 +1705,7 @@ Keep dialogue under 20 words. Act as Aoi Hinami - cold, calculated, direct.`;
       } // end key loop
     }
     
-    // Try Gemini if Groq failed or didn't produce a response
+    // If Groq fails or does not produce valid JSON, try Gemini backup next.
     if (!emotionSuccess) {
       console.warn('⚠️ Groq emotion generation failed or not configured, trying Gemini backup...');
       const geminiKeys = [
@@ -1704,9 +1740,10 @@ Keep dialogue under 20 words. Act as Aoi Hinami - cold, calculated, direct.`;
                 const parsed = JSON.parse(jsonMatch[0]);
                 if (parsed.expression_id && parsed.dialogue) {
                   console.log(`✅ Gemini API backup success with ${geminiModel} (${keyLabel} key)`);
-                  expressionId = parsed.expression_id;
+                  expressionId = normalizeEmotionExpressionId(parsed.expression_id);
                   dialogue = parsed.dialogue;
                   emotionSuccess = true;
+                  emotionSource = 'gemini';
                   break;
                 }
               } catch (parseError) {
@@ -1716,16 +1753,27 @@ Keep dialogue under 20 words. Act as Aoi Hinami - cold, calculated, direct.`;
           } catch (geminiError) {
             console.warn(`⚠️ Gemini API backup failed with ${geminiModel}:`, geminiError.message);
           }
-        } // end model loop
-        if (emotionSuccess) break; // exit key loop
-      } // end key loop
+        }
+        if (emotionSuccess) break;
+      }
+    }
+
+    // If both API paths fail, use deterministic keyword fallback.
+    if (!emotionSuccess) {
+      console.warn('⚠️ Groq and Gemini emotion generation failed or not configured, using keyword fallback...');
+      const keywordEmotion = detectEmotionByKeywords(message);
+      if (keywordEmotion) {
+        expressionId = keywordEmotion.expression_id;
+        dialogue = keywordEmotion.dialogue;
+      }
     }
 
     const normalizedResponse = {
-      expression_id: expressionId,
+      expression_id: normalizeEmotionExpressionId(expressionId),
       dialogue: dialogue || 'Acknowledge the gap and execute.',
       timestamp: new Date().toISOString(),
-      userId: userIdSafe
+      userId: userIdSafe,
+      source: emotionSuccess ? emotionSource : 'keyword'
     };
 
     response.json(normalizedResponse);

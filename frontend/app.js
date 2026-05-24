@@ -539,8 +539,22 @@ function getAssetPathForExpression(assetType) {
     if (EXPRESSION_ASSETS[expression]) {
         const assets = EXPRESSION_ASSETS[expression];
         if (assetType === 'mouth') return assets.mouth;
-        if (assetType === 'eyesLeft') return assets.eyesLeft;
-        if (assetType === 'eyesRight') return assets.eyesRight;
+        if (assetType === 'eyesLeft') {
+            // Return object with static eye + blink animation eyes if available
+            return {
+                open: assets.eyesLeft || assets.eyesLeftOpen || ASSET_PATHS.eyes.leftOpen,
+                closed: assets.eyesLeftClosed || ASSET_PATHS.eyes.leftClosed,
+                half: assets.eyesLeftHalf || ASSET_PATHS.eyes.leftHalf
+            };
+        }
+        if (assetType === 'eyesRight') {
+            // Return object with static eye + blink animation eyes if available
+            return {
+                open: assets.eyesRight || assets.eyesRightOpen || ASSET_PATHS.eyes.rightOpen,
+                closed: assets.eyesRightClosed || ASSET_PATHS.eyes.rightClosed,
+                half: assets.eyesRightHalf || ASSET_PATHS.eyes.rightHalf
+            };
+        }
     }
     
     // Fall back to generic assets
@@ -622,10 +636,16 @@ function updateEyeLayers() {
         leftOpenEl = document.getElementById('left-eye-open');
     } else {
         leftOpenEl = createOrUpdateLayerElement('left-eye-open', leftEyeAssets.open, 'eye-layer');
-        leftExpressionEl = document.getElementById('left-eye-expression');
+        leftExpressionEl = null;
+        const staleLeftExpressionEl = document.getElementById('left-eye-expression');
+        if (staleLeftExpressionEl) {
+            staleLeftExpressionEl.style.opacity = '0';
+            staleLeftExpressionEl.style.visibility = 'hidden';
+            staleLeftExpressionEl.style.display = 'none';
+        }
     }
-    leftClosedEl = createOrUpdateLayerElement('left-eye-annoyed', ASSET_PATHS.eyes.leftClosed, 'eye-layer');
-    leftHalfEl = createOrUpdateLayerElement('left-eye-half-closed', ASSET_PATHS.eyes.leftHalf, 'eye-layer');
+    leftClosedEl = createOrUpdateLayerElement('left-eye-annoyed', leftEyeAssets.closed || ASSET_PATHS.eyes.leftClosed, 'eye-layer');
+    leftHalfEl = createOrUpdateLayerElement('left-eye-half-closed', leftEyeAssets.half || ASSET_PATHS.eyes.leftHalf, 'eye-layer');
     
     // Setup RIGHT EYE elements
     if (typeof rightEyeAssets === 'string') {
@@ -633,10 +653,16 @@ function updateEyeLayers() {
         rightOpenEl = document.getElementById('right-eye-open');
     } else {
         rightOpenEl = createOrUpdateLayerElement('right-eye-open', rightEyeAssets.open, 'eye-layer');
-        rightExpressionEl = document.getElementById('right-eye-expression');
+        rightExpressionEl = null;
+        const staleRightExpressionEl = document.getElementById('right-eye-expression');
+        if (staleRightExpressionEl) {
+            staleRightExpressionEl.style.opacity = '0';
+            staleRightExpressionEl.style.visibility = 'hidden';
+            staleRightExpressionEl.style.display = 'none';
+        }
     }
-    rightClosedEl = createOrUpdateLayerElement('right-eye-annoyed', ASSET_PATHS.eyes.rightClosed, 'eye-layer');
-    rightHalfEl = createOrUpdateLayerElement('right-eye-half-closed', ASSET_PATHS.eyes.rightHalf, 'eye-layer');
+    rightClosedEl = createOrUpdateLayerElement('right-eye-annoyed', rightEyeAssets.closed || ASSET_PATHS.eyes.rightClosed, 'eye-layer');
+    rightHalfEl = createOrUpdateLayerElement('right-eye-half-closed', rightEyeAssets.half || ASSET_PATHS.eyes.rightHalf, 'eye-layer');
     
     // NOW UPDATE ALL ELEMENTS SIMULTANEOUSLY (both left and right in same batch)
     // This ensures they change at the exact same moment
@@ -1226,6 +1252,7 @@ function mapExpressionId(expressionId) {
         'exp_angry': 'exp 1',
         'exp_annoyed': 'exp 2',
         'exp_satisfied': 'exp 3',
+        'exp_smiling': 'exp 4',
         'exp_smiling_audit': 'exp 4'
     };
     return mapping[expressionId] || 'exp 2';
@@ -1416,7 +1443,8 @@ async function handleChatSend() {
                 'exp_angry': 'exp 1 - angry',
                 'exp_annoyed': 'exp 2 - annoyed or disatisfied',
                 'exp_satisfied': 'exp3-proud or satisfied',
-                'exp_smiling': 'exp 4 - smiling'
+                'exp_smiling': 'exp 4 - smiling',
+                'exp_smiling_audit': 'exp 4 - smiling'
             };
             
             const expression = expressionMap[emotionResponse.expression_id] || 'exp 2 - annoyed or disatisfied';
@@ -1446,16 +1474,16 @@ async function handleChatSend() {
             let fallbackEmotion = 'exp3-proud or satisfied';
             let fallbackDialogue = 'Hmm, I see.';
             
-            if (/depressed|down|sad|worthless|hopeless|crying|anxious|overwhelmed|stressed|miserable|terrible|awful|hate|devastated|broken|dying|painful|hurting|struggling|suffering/i.test(msgLower)) {
+            if (/depress|down|sad|worthless|hopeless|cry|tears|lonely|alone|anxious|anxiety|panic|scared|afraid|worried|overwhelmed|stress|burnt out|burnout|exhausted|tired|miserable|terrible|awful|hate myself|devastated|broken|dying|painful|hurting|struggl|suffer|lost|empty|numb|demotivat|can't do this|cant do this/i.test(msgLower)) {
                 fallbackEmotion = 'exp 1 - angry';
                 fallbackDialogue = 'Your instability is showing.';
-            } else if (/excited|happy|enthusiastic|stoked|great|amazing|awesome|love it|incredible|fantastic|best|optimistic|thrilled|pumped|hyped|blessed|grateful|thankful|proud/i.test(msgLower)) {
+            } else if (/excited|happy|joy|glad|enthusiastic|stoked|great|amazing|awesome|love it|love this|incredible|fantastic|best|optimistic|thrilled|pumped|hyped|blessed|grateful|thankful|proud|confident|motivated|lets go|let's go|yay|nice|cool|excellent|perfect|win|winning/i.test(msgLower)) {
                 fallbackEmotion = 'exp 4 - smiling';
                 fallbackDialogue = 'You\'re trending upward.';
-            } else if (/completed|finishing|finished|done|accomplished|achieved|passed|succeeded|nailed|workout|exercise|studied|learned|delivered|executed|submitted|implemented|built|created/i.test(msgLower)) {
+            } else if (/completed|complete|finishing|finished|done|accomplished|achieved|passed|succeeded|nailed|workout|exercise|gym|trained|training|pushup|pullup|squat|run|ran|studied|study|revised|revision|learned|practiced|delivered|executed|submitted|implemented|built|created|shipped|solved|fixed|cleaned|organized|productive|consistent|streak/i.test(msgLower)) {
                 fallbackEmotion = 'exp3-proud or satisfied';
                 fallbackDialogue = 'Progress logged.';
-            } else if (/procrastinat|wasting time|lazy|junk food|eating|skipped|failed|gave up|excuse|quit|wasted|distracted|overthinking|complain|annoyed|frustrated|irritated|bothered|fed up|scrolling|social media|netflix|gaming/i.test(msgLower)) {
+            } else if (/procrastinat|wasting time|waste time|lazy|junk food|junk|overeating|ate too much|skipped|failed|gave up|excuse|quit|wasted|distracted|distraction|can't focus|cant focus|unfocused|overthinking|complain|annoyed|angry|mad|pissed|frustrated|irritated|bothered|fed up|bored|stuck|delay|later|scrolling|doomscroll|reels|shorts|instagram|youtube|social media|netflix|gaming|game all day/i.test(msgLower)) {
                 fallbackEmotion = 'exp 2 - annoyed or disatisfied';
                 fallbackDialogue = 'Predictable inefficiency.';
             }

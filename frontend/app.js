@@ -1309,7 +1309,7 @@ async function handleChatSend() {
                 'exp_angry': 'exp 1 - angry',
                 'exp_annoyed': 'exp 2 - annoyed or disatisfied',
                 'exp_satisfied': 'exp3-proud or satisfied',
-                'exp_smiling_audit': 'exp 4 - smiling'
+                'exp_smiling': 'exp 4 - smiling'
             };
             
             const expression = expressionMap[emotionResponse.expression_id] || 'exp 2 - annoyed or disatisfied';

@@ -565,39 +565,53 @@ function updateEyeLayers() {
     if (leftExpressionEl) {
         leftExpressionEl.style.opacity = eyeOpenOpacity;
         leftExpressionEl.style.transition = transitionStyle;
+        leftExpressionEl.style.visibility = 'visible';
+        leftExpressionEl.style.display = 'block';
     }
     if (leftOpenEl) {
-        leftOpenEl.style.opacity = (leftExpressionEl ? '0' : eyeOpenOpacity);
+        // COMPLETELY HIDE generic open eyes when expression has custom eyes
+        leftOpenEl.style.opacity = leftExpressionEl ? '0' : eyeOpenOpacity;
+        leftOpenEl.style.visibility = leftExpressionEl ? 'hidden' : 'visible';
+        leftOpenEl.style.display = leftExpressionEl ? 'none' : 'block';
         leftOpenEl.style.transition = transitionStyle;
     }
     if (rightExpressionEl) {
         rightExpressionEl.style.opacity = eyeOpenOpacity;
         rightExpressionEl.style.transition = transitionStyle;
+        rightExpressionEl.style.visibility = 'visible';
+        rightExpressionEl.style.display = 'block';
     }
     if (rightOpenEl) {
-        rightOpenEl.style.opacity = (rightExpressionEl ? '0' : eyeOpenOpacity);
+        // COMPLETELY HIDE generic open eyes when expression has custom eyes
+        rightOpenEl.style.opacity = rightExpressionEl ? '0' : eyeOpenOpacity;
+        rightOpenEl.style.visibility = rightExpressionEl ? 'hidden' : 'visible';
+        rightOpenEl.style.display = rightExpressionEl ? 'none' : 'block';
         rightOpenEl.style.transition = transitionStyle;
     }
     
     // Update closed/half eyes (identical for both left and right)
-    leftClosedEl.style.opacity = eyeClosedOpacity;
+    // HIDE these when using expression-specific eyes
+    leftClosedEl.style.opacity = leftExpressionEl ? '0' : eyeClosedOpacity;
+    leftClosedEl.style.visibility = leftExpressionEl ? 'hidden' : 'visible';
+    leftClosedEl.style.display = leftExpressionEl ? 'none' : 'block';
     leftClosedEl.style.transition = transitionStyle;
-    leftClosedEl.style.visibility = 'visible';
-    leftClosedEl.style.display = 'block';
-    leftHalfEl.style.opacity = eyeHalfClosedOpacity;
-    leftHalfEl.style.transition = transitionStyle;
-    leftHalfEl.style.visibility = 'visible';
-    leftHalfEl.style.display = 'block';
     
-    // Right eye closed layer - EXPLICIT VISIBILITY AND STYLING
-    rightClosedEl.style.opacity = eyeClosedOpacity;
+    leftHalfEl.style.opacity = leftExpressionEl ? '0' : eyeHalfClosedOpacity;
+    leftHalfEl.style.visibility = leftExpressionEl ? 'hidden' : 'visible';
+    leftHalfEl.style.display = leftExpressionEl ? 'none' : 'block';
+    leftHalfEl.style.transition = transitionStyle;
+    
+    // Right eye closed layer - hide when using expression-specific eyes
+    rightClosedEl.style.opacity = rightExpressionEl ? '0' : eyeClosedOpacity;
+    rightClosedEl.style.visibility = rightExpressionEl ? 'hidden' : 'visible';
+    rightClosedEl.style.display = rightExpressionEl ? 'none' : 'block';
     rightClosedEl.style.transition = transitionStyle;
-    rightClosedEl.style.visibility = 'visible';
-    rightClosedEl.style.display = 'block';
     rightClosedEl.style.zIndex = '60';
-    rightHalfEl.style.opacity = eyeHalfClosedOpacity;
+    
+    rightHalfEl.style.opacity = rightExpressionEl ? '0' : eyeHalfClosedOpacity;
+    rightHalfEl.style.visibility = rightExpressionEl ? 'hidden' : 'visible';
+    rightHalfEl.style.display = rightExpressionEl ? 'none' : 'block';
     rightHalfEl.style.transition = transitionStyle;
-    rightHalfEl.style.visibility = 'visible';
     rightHalfEl.style.display = 'block';
     rightHalfEl.style.zIndex = '59';
     

@@ -22,44 +22,44 @@ const EXPRESSION_MAP = {
 // Expression-specific assets: eyes and mouth variations
 const EXPRESSION_ASSETS = {
     'exp 1 - angry': {
-        mouth: './layers/exp 1 - angry/angry mouth.png',
-        eyesLeft: './layers/exp 1 - angry/angry left eye.png',
-        eyesRight: './layers/exp 1 - angry/angry right eye.png'
+        mouth: './layers expression/exp 1 - angry/angry mouth.png',
+        eyesLeft: './layers expression/exp 1 - angry/angry left eye.png',
+        eyesRight: './layers expression/exp 1 - angry/angry right eye.png'
     },
     'exp 2 - annoyed or disatisfied': {
-        mouth: './layers/exp 2 - annoyed or disatisfied/mouth annoyed.png',
-        eyesLeft: './layers/exp 2 - annoyed or disatisfied/lefteye annoyed.png',
-        eyesRight: './layers/exp 2 - annoyed or disatisfied/righteye annoyed.png'
+        mouth: './layers expression/exp 2 - annoyed or disatisfied/mouth annoyed.png',
+        eyesLeft: './layers expression/exp 2 - annoyed or disatisfied/lefteye annoyed.png',
+        eyesRight: './layers expression/exp 2 - annoyed or disatisfied/righteye annoyed.png'
     },
     'exp3-proud or satisfied': {
-        mouth: './layers/exp3-proud or satisfied/proud mouth.png',
-        eyesLeft: './layers/exp3-proud or satisfied/left half opened eye.png',
-        eyesRight: './layers/exp3-proud or satisfied/right half opened eye.png'
+        mouth: './layers expression/exp3-proud or satisfied/proud mouth.png',
+        eyesLeft: './layers expression/exp3-proud or satisfied/left half opened eye.png',
+        eyesRight: './layers expression/exp3-proud or satisfied/right half opened eye.png'
     },
     'exp 4 - smiling': {
-        mouth: './layers/exp 4 - smiling/mouth smiling.png',
-        eyesLeft: './layers/exp 4 - smiling/lefteye smiling.png',
-        eyesRight: './layers/exp 4 - smiling/righteye smiling.png'
+        mouth: './layers expression/exp 4 - smiling/mouth smiling.png',
+        eyesLeft: './layers expression/exp 4 - smiling/lefteye smiling.png',
+        eyesRight: './layers expression/exp 4 - smiling/righteye smiling.png'
     }
 };
 
 // Base character and animation layers
 const ASSET_PATHS = {
-    base: './layers/base layers/base.png',
+    base: './layers expression/base layers/base.png',
     mouth: {
-        closed: './layers/mouth(use for speaking animation and expression and generation)/closed mouth.png',
-        half: './layers/mouth(use for speaking animation and expression and generation)/half opened mouth.png',
-        open: './layers/mouth(use for speaking animation and expression and generation)/open mouth1.png'
+        closed: './layers expression/mouth(use for speaking animation and expression and generation)/closed mouth.png',
+        half: './layers expression/mouth(use for speaking animation and expression and generation)/half opened mouth.png',
+        open: './layers expression/mouth(use for speaking animation and expression and generation)/open mouth1.png'
     },
     eyes: {
         // Left eyes
-        leftOpen: './layers/eyes (  use blinking animation and expression  and emotiongeneration)/full opened eye/left full opened eye.png',
-        leftClosed: './layers/eyes (  use blinking animation and expression  and emotiongeneration)/full closed eye/left eye closed.png',
-        leftHalf: './layers/eyes (  use blinking animation and expression  and emotiongeneration)/half closed eye/halfclosed eye left.png',
+        leftOpen: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full opened eye/left full opened eye.png',
+        leftClosed: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full closed eye/left eye closed.png',
+        leftHalf: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/half closed eye/halfclosed eye left.png',
         // Right eyes
-        rightOpen: './layers/eyes (  use blinking animation and expression  and emotiongeneration)/full opened eye/right full opened eye.png',
-        rightClosed: './layers/eyes (  use blinking animation and expression  and emotiongeneration)/full closed eye/right eye closed.png',
-        rightHalf: './layers/eyes (  use blinking animation and expression  and emotiongeneration)/half closed eye/halfclosed eye right.png'
+        rightOpen: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full opened eye/right full opened eye.png',
+        rightClosed: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full closed eye/right eye closed.png',
+        rightHalf: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/half closed eye/halfclosed eye right.png'
     }
 };
 
@@ -843,7 +843,7 @@ function initAnimationEngine() {
         avatarBase = document.createElement('img');
         avatarBase.id = 'avatar-base';
         avatarBase.className = 'avatar-layer';
-        avatarBase.src = './layers/base layers/base.png';
+        avatarBase.src = './layers expression/base layers/base.png';
         avatarBase.alt = 'Character Base';
         avatarBase.style.maxWidth = '100%';
         avatarBase.style.maxHeight = '100%';
@@ -1524,8 +1524,8 @@ function initProfileForm() {
 
 function initializeApp() {
     console.log('🚀 Initializing Interactive Character Build AI');
-    console.log('✅ Base character: ./layers/base layers/base.png');
-    console.log('✅ Animation assets loaded from ./layers/');
+    console.log('✅ Base character: ./layers expression/base layers/base.png');
+    console.log('✅ Animation assets loaded from ./layers expression/');
     console.log('✅ Backend API ready at:', window.AOI_API_BASE_URL || 'http://localhost:3000');
     
     initializeCharacterVoiceEngine();

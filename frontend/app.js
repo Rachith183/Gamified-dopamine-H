@@ -87,6 +87,8 @@ const AppState = {
     userContext: {},
     userId: 'user_' + Math.random().toString(36).substr(2, 9),
     currentDailyXp: 0,
+    emotionTimeoutId: null,
+    emotionDurationMs: 5000,  // Emotions display for 5 seconds then reset
     tasks: [
         { id: 'ai_1', name: "Master VTU Question Paper Scanners", xp: 75, isAi: true, completed: false, timeRemaining: 3600, timerActive: false },
         { id: 'ai_2', name: "Execute High-Intensity Calisthenics Routine", xp: 65, isAi: true, completed: false, timeRemaining: 1800, timerActive: false },
@@ -382,6 +384,24 @@ function switchAvatarExpression(expressionState) {
     } else {
         console.log('ℹ️ Using generic blinking animation for expression:', expression);
     }
+}
+
+// Set emotion temporarily - auto-resets to default after duration
+function setTemporaryEmotion(expression) {
+    // Clear any existing timeout
+    if (AppState.emotionTimeoutId) {
+        clearTimeout(AppState.emotionTimeoutId);
+    }
+    
+    // Set the emotion
+    switchAvatarExpression(expression);
+    
+    // Schedule reset to default expression
+    AppState.emotionTimeoutId = setTimeout(() => {
+        console.log('⏰ Emotion timeout - resetting to default');
+        switchAvatarExpression('exp3-proud or satisfied');
+        AppState.emotionTimeoutId = null;
+    }, AppState.emotionDurationMs);
 }
 
 function evaluateEmotionState() {
@@ -1327,7 +1347,7 @@ async function handleChatSend() {
             };
             
             const expression = expressionMap[emotionResponse.expression_id] || 'exp 2 - annoyed or disatisfied';
-            switchAvatarExpression(expression);
+            setTemporaryEmotion(expression);  // Set emotion with auto-reset timeout
             console.log('🎭 Emotion expression updated to:', expression);
             
             // Display emotion-based dialogue

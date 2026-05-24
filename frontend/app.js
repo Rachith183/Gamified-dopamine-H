@@ -36,17 +36,38 @@ const EXPRESSION_ASSETS = {
     'exp 2 - annoyed or disatisfied': {
         mouth: './layers expression/exp 2 - annoyed or disatisfied/mouth annoyed.png',
         eyesLeft: './layers expression/exp 2 - annoyed or disatisfied/lefteye annoyed.png',
-        eyesRight: './layers expression/exp 2 - annoyed or disatisfied/righteye annoyed.png'
+        eyesRight: './layers expression/exp 2 - annoyed or disatisfied/righteye annoyed.png',
+        // Blink animation eyes for annoyed
+        eyesLeftOpen: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full opened eye/left full opened eye.png',
+        eyesLeftClosed: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full closed eye/left eye closed.png',
+        eyesLeftHalf: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/half closed eye/halfclosed eye left.png',
+        eyesRightOpen: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full opened eye/right full opened eye.png',
+        eyesRightClosed: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full closed eye/right eye closed.png',
+        eyesRightHalf: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/half closed eye/halfclosed eye right.png'
     },
     'exp3-proud or satisfied': {
         mouth: './layers expression/exp3-proud or satisfied/proud mouth.png',
         eyesLeft: './layers expression/exp3-proud or satisfied/left half opened eye.png',
-        eyesRight: './layers expression/exp3-proud or satisfied/right half opened eye.png'
+        eyesRight: './layers expression/exp3-proud or satisfied/right half opened eye.png',
+        // Blink animation eyes for satisfied
+        eyesLeftOpen: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full opened eye/left full opened eye.png',
+        eyesLeftClosed: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full closed eye/left eye closed.png',
+        eyesLeftHalf: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/half closed eye/halfclosed eye left.png',
+        eyesRightOpen: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full opened eye/right full opened eye.png',
+        eyesRightClosed: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full closed eye/right eye closed.png',
+        eyesRightHalf: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/half closed eye/halfclosed eye right.png'
     },
     'exp 4 - smiling': {
         mouth: './layers expression/exp 4 - smiling/mouth smiling.png',
         eyesLeft: './layers expression/exp 4 - smiling/lefteye smiling.png',
-        eyesRight: './layers expression/exp 4 - smiling/righteye smiling.png'
+        eyesRight: './layers expression/exp 4 - smiling/righteye smiling.png',
+        // Blink animation eyes for smiling
+        eyesLeftOpen: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full opened eye/left full opened eye.png',
+        eyesLeftClosed: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full closed eye/left eye closed.png',
+        eyesLeftHalf: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/half closed eye/halfclosed eye left.png',
+        eyesRightOpen: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full opened eye/right full opened eye.png',
+        eyesRightClosed: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/full closed eye/right eye closed.png',
+        eyesRightHalf: './layers expression/eyes (  use blinking animation and expression  and emotiongeneration)/half closed eye/halfclosed eye right.png'
     }
 };
 
@@ -1375,16 +1396,21 @@ async function handleChatSend() {
                 userContext: userContext
             })
         }).then(r => {
+            console.log('📡 Emotion API response status:', r.status, r.statusText);
             if (!r.ok) {
                 throw new Error(`API error: ${r.status}`);
             }
             return r.json();
+        }).then(data => {
+            console.log('📦 Emotion API response data:', data);
+            return data;
         }).catch(err => {
-            console.error('❌ Emotion API error:', err);
+            console.error('❌ Emotion API error:', err.message);
             return null;
         });
         
         // Update character expression based on emotion response
+        console.log('🎭 emotionResponse object:', emotionResponse);
         if (emotionResponse && emotionResponse.expression_id) {
             const expressionMap = {
                 'exp_angry': 'exp 1 - angry',
@@ -1413,12 +1439,43 @@ async function handleChatSend() {
                 }
             }
         } else {
-            console.log('⚠️ No emotion response, showing error message');
+            console.log('⚠️ No emotion response from API, using keyword-based fallback');
+            
+            // Try to detect emotion from keywords locally as fallback
+            const msgLower = userMessage.toLowerCase();
+            let fallbackEmotion = 'exp3-proud or satisfied';
+            let fallbackDialogue = 'Hmm, I see.';
+            
+            if (/depressed|down|sad|worthless|hopeless|crying|anxious|overwhelmed|stressed|miserable|terrible|awful|hate|devastated|broken|dying|painful|hurting|struggling|suffering/i.test(msgLower)) {
+                fallbackEmotion = 'exp 1 - angry';
+                fallbackDialogue = 'Your instability is showing.';
+            } else if (/excited|happy|enthusiastic|stoked|great|amazing|awesome|love it|incredible|fantastic|best|optimistic|thrilled|pumped|hyped|blessed|grateful|thankful|proud/i.test(msgLower)) {
+                fallbackEmotion = 'exp 4 - smiling';
+                fallbackDialogue = 'You\'re trending upward.';
+            } else if (/completed|finishing|finished|done|accomplished|achieved|passed|succeeded|nailed|workout|exercise|studied|learned|delivered|executed|submitted|implemented|built|created/i.test(msgLower)) {
+                fallbackEmotion = 'exp3-proud or satisfied';
+                fallbackDialogue = 'Progress logged.';
+            } else if (/procrastinat|wasting time|lazy|junk food|eating|skipped|failed|gave up|excuse|quit|wasted|distracted|overthinking|complain|annoyed|frustrated|irritated|bothered|fed up|scrolling|social media|netflix|gaming/i.test(msgLower)) {
+                fallbackEmotion = 'exp 2 - annoyed or disatisfied';
+                fallbackDialogue = 'Predictable inefficiency.';
+            }
+            
+            // Update expression even if API failed
+            setTemporaryEmotion(fallbackEmotion);
+            console.log('🎭 Fallback emotion:', fallbackEmotion);
+            
+            // Show the response
             const fallbackMsg = document.createElement('div');
             fallbackMsg.className = 'chat-message ai';
-            fallbackMsg.innerHTML = '<p>ERROR: [api is either exhausted or not working]</p>';
+            fallbackMsg.innerHTML = `<p>${escapeHtml(fallbackDialogue)}</p>`;
             DOM.chatHistory?.appendChild(fallbackMsg);
             if (DOM.chatHistory) DOM.chatHistory.scrollTop = DOM.chatHistory.scrollHeight;
+            
+            try {
+                await generateAndPlayAudio(fallbackDialogue);
+            } catch (audioErr) {
+                console.warn('Audio generation failed:', audioErr);
+            }
         }
         
         // Also call main backend API for battle plan and rewards

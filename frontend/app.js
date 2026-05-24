@@ -1374,7 +1374,15 @@ async function handleChatSend() {
                 userId: AppState.userId,
                 userContext: userContext
             })
-        }).then(r => r.json());
+        }).then(r => {
+            if (!r.ok) {
+                throw new Error(`API error: ${r.status}`);
+            }
+            return r.json();
+        }).catch(err => {
+            console.error('❌ Emotion API error:', err);
+            return null;
+        });
         
         // Update character expression based on emotion response
         if (emotionResponse && emotionResponse.expression_id) {
@@ -1395,10 +1403,22 @@ async function handleChatSend() {
                 aiMsgEl.className = 'chat-message ai';
                 aiMsgEl.innerHTML = `<p>${escapeHtml(emotionResponse.dialogue)}</p>`;
                 DOM.chatHistory?.appendChild(aiMsgEl);
+                if (DOM.chatHistory) DOM.chatHistory.scrollTop = DOM.chatHistory.scrollHeight;
                 
                 // Play audio with the emotional response
-                await generateAndPlayAudio(emotionResponse.dialogue);
+                try {
+                    await generateAndPlayAudio(emotionResponse.dialogue);
+                } catch (audioErr) {
+                    console.warn('Audio generation failed:', audioErr);
+                }
             }
+        } else {
+            console.log('⚠️ No emotion response, showing error message');
+            const fallbackMsg = document.createElement('div');
+            fallbackMsg.className = 'chat-message ai';
+            fallbackMsg.innerHTML = '<p>ERROR: [api is either exhausted or not working]</p>';
+            DOM.chatHistory?.appendChild(fallbackMsg);
+            if (DOM.chatHistory) DOM.chatHistory.scrollTop = DOM.chatHistory.scrollHeight;
         }
         
         // Also call main backend API for battle plan and rewards
@@ -1433,6 +1453,12 @@ async function handleChatSend() {
         }
     } catch (error) {
         console.error('Chat error:', error);
+        // Show error message to user
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'chat-message ai';
+        errorMsg.innerHTML = '<p>ERROR: [api is either exhausted or not working]</p>';
+        DOM.chatHistory?.appendChild(errorMsg);
+        if (DOM.chatHistory) DOM.chatHistory.scrollTop = DOM.chatHistory.scrollHeight;
     }
 }
 
